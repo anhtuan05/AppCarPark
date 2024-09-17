@@ -1,0 +1,45 @@
+.home-content {
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    color: var(--main-text-color-w);
+    text-align: center;
+    margin-top: -40px;
+}
+
+.home-title {
+    font-size: 48px;
+    text-shadow: 10px 15px 20px var(--main-textshadow-color);
+    position: relative;
+    top: 110px
+}
+
+.booking-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: var(--main-bg-color);
+    color: var(--main-text-color-w);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 10%;
+    top: 110px;
+    left: 45%;
+    transition: background-color 0.3s ease;
+    transition: padding 0.3s ease;
+    transition: font-size 0.3s ease;
+}
+
+.booking-button span {
+    margin-right: 5px;
+}
+
+.booking-button:hover {
+    background-color: #45a049;
+    font-size: 18px;
+    padding: 15px 25px;
+}

@@ -1,38 +1,55 @@
-.App {
-  text-align: center;
+:root {
+    --main-bg-color: #008000;
+    --main-hover-color: #006400;
+    --main-dropmenu-color: #008B8B;
+    --main-text-color: #333333;
+    --main-text-color-w: #ffffff;
+    --main-btn-color-green: #28a745;
+    --main-btn-color-blue: #088F8F;
+    --main-textshadow-color: #ed105d;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+
+body {
+    margin: 0 auto;
+    max-width: 100%;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+a {
+    text-decoration: none;
+    color: var(--main-text-color);
+    cursor: pointer;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+form {
+    background: white;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.App-link {
-  color: #61dafb;
+label {
+    display: block;
+    margin-bottom: 5px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+input[type="text"],
+input[type="password"] {
+    padding: 8px;
+    box-sizing: border-box;
+    border-radius: 4px;
+}
+
+button {
+    padding: 15px 40px;
+    background-color: var(--main-btn-color-blue);
+    color: var(--main-text-color-w);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: auto;
 }
