@@ -1,0 +1,43 @@
+.booking-container {
+    padding: 20px;
+}
+
+.booking-form {
+    display: flex;
+    flex-direction: column;
+
+}
+
+.booking-form label {
+    margin-right: 10px;
+}
+
+.booking-form select,
+.booking-form input {
+    margin-bottom: 20px;
+    width: 20%;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.booking-form button {
+    width: 15%;
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+.booking-history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.booking-history-table th,
+.booking-history-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.booking-history-table th {
+    background-color: #f2f2f2;
+}

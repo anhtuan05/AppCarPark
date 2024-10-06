@@ -1,4 +1,8 @@
 import './App.css';
+import React, { useReducer } from 'react';
+import cookie from 'react-cookies'
+import CarParkContext from './CarParkContext'
+import CarParkUserReducer from './CarParkUserReducer'
 import { Routes, Route } from 'react-router-dom'
 import Header from './Component/Header';
 import Home from './Component/Home'
@@ -9,26 +13,35 @@ import Feedback from './Component/Feedback'
 import Login from './Component/Login'
 import Register from './Component/Register';
 import Footer from './Component/Footer';
-import WebcamCapture from './Component/WebcamCapture';
+import Parking from './Component/Parking';
+import ReNewSub from './Component/ReNewSub';
+import Staff from './Component/Staff';
+
 
 
 function App() {
+  const [user, dispatch] = useReducer(CarParkUserReducer, cookie.load("user") || null);
   return (
-    <div>
-      <Header />
-      <div style={{ paddingTop: "40px", margin: "0 auto", width: "90%" }}>
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/Booking' element={<Booking />} />
-          <Route path='/VehicleManagement' element={<VehicleManagement />} />
-          <Route path='/Subscription' element={<Subscription />} />
-          <Route path='/Feedback' element={<Feedback />} />
-          <Route path='/Login' element={<Login />} />
-          <Route path='/Register' element={<Register />} />
-        </Routes>
+    <CarParkContext.Provider value={[user, dispatch]}>
+      <div>
+        <Header />
+        <div style={{ paddingTop: "40px", margin: "0 auto", width: "90%", minHeight: "360px" }}>
+          <Routes>
+            <Route path='/' element={<Home />} />
+            <Route path='/parking' element={<Parking />} />
+            <Route path="/booking/:spotId" element={<Booking />} />
+            <Route path='/vehicleManagement' element={<VehicleManagement />} />
+            <Route path='/subscription/:spotId' element={<Subscription />} />
+            <Route path='/feedback' element={<Feedback />} />
+            <Route path='/login' element={<Login />} />
+            <Route path='/register' element={<Register />} />
+            <Route path='/staff' element={<Staff />} />
+            <Route path='/re-new-sub' element={<ReNewSub />} />
+          </Routes>
+        </div>
+        <Footer />
       </div>
-      <Footer/>
-    </div>
+    </CarParkContext.Provider>
   );
 }
 

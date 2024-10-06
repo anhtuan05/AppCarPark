@@ -1,5 +1,6 @@
 :root {
     --main-bg-color: #008000;
+    --main-bg-color2: #62ba6253;
     --main-hover-color: #006400;
     --main-dropmenu-color: #008B8B;
     --main-text-color: #333333;
@@ -33,7 +34,10 @@ label {
 }
 
 input[type="text"],
-input[type="password"] {
+input[type="password"],
+input[type="email"],
+input[type="date"],
+input[type="tel"] {
     padding: 8px;
     box-sizing: border-box;
     border-radius: 4px;
@@ -52,4 +56,24 @@ button {
 button:disabled {
     background-color: #cccccc;
     cursor: auto;
+}
+
+.must-be-logged {
+    height: 360px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+}
+
+.must-be-logged a{
+    text-decoration: underline;
+    margin-left: 20px;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.must-be-logged a:hover{
+    color: var(--main-hover-color);
+    background-color: var(--main-bg-color2);
 }

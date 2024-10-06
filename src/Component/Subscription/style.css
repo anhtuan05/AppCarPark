@@ -1,0 +1,102 @@
+.subscription-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.subscription-container h2 {
+    margin-bottom: 20px;
+    color: #333;
+    text-align: left;
+}
+
+.subscription-options {
+    width: 100%;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
+
+.subscription-options label {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.subscription-options select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+}
+
+.subscription-options select:focus {
+    border-color: #4CAF50;
+    outline: none;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:focus {
+    outline: none;
+}
+
+button:disabled {
+    background-color: #bbb;
+    cursor: not-allowed;
+}
+
+.subscription-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.subscription-history-table th,
+td {
+    text-align: left;
+    padding: 12px;
+    border: 1px solid #ddd;
+}
+
+.subscription-history-table th {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.subscription-history-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.subscription-history-table tr:hover {
+    background-color: #ddd;
+}
+
+.subscription-history-table td {
+    font-size: 14px;
+    color: #333;
+}

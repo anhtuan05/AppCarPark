@@ -1,0 +1,107 @@
+.parking-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.parking-lots {
+    margin-bottom: 20px;
+}
+
+.parking-lot-btn {
+    margin: 10px;
+    padding: 15px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.parking-lot-btn.active {
+    background-color: #0056b3;
+}
+
+.parking-spots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.parking-spot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 120px;
+    height: 120px;
+    margin: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.parking-spot.not-clickable {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.parking-spot.clickable:hover {
+    background-color: var(--main-bg-color2);
+}
+
+.parking-spot.clickable:hover span {
+    color: #28a745;
+}
+
+.parking-spot.available {
+    background-color: #28a745;
+}
+
+.parking-spot.reserved {
+    background-color: #dc3545;
+}
+
+.parking-spot.in_use {
+    background-color: #ffc107;
+}
+
+.parking-spot.maintenance {
+    background-color: #6c757d;
+}
+
+.parking-spot span {
+    margin-top: 5px;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.modal-content button {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: var(--main-bg-color);
+}
+
+.modal-content button:hover {
+    background-color: var(--main-hover-color);
+}

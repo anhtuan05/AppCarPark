@@ -10,7 +10,10 @@ form.form-register {
 }
 
 input[type="text"],
-input[type="password"] {
+input[type="password"],
+input[type="email"],
+input[type="date"],
+input[type="tel"] {
     width: 70%;
     padding: 8px;
 }

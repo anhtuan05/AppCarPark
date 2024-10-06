@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Webcam from 'react-webcam'
+import Webcam from 'react-webcam';
 import * as faceapi from 'face-api.js';
 
-const WebcamCapture = () => {
+const WebcamCapture = ({ setFaceDescription }) => {
   const webcamRef = useRef(null);
   const [image, setImage] = useState(null);
-  const [faceDescription, setFaceDescription] = useState(null);
   const [isCaptured, setIsCaptured] = useState(false);
 
   // Load models for face-api.js
@@ -29,12 +28,13 @@ const WebcamCapture = () => {
   const analyzeImage = async () => {
     const img = document.getElementById('captured-image');
     const detections = await faceapi.detectAllFaces(img).withFaceLandmarks().withFaceDescriptors();
-    
+
     if (detections.length > 0) {
       const descriptions = detections.map(d => d.descriptor);
-      setFaceDescription(JSON.stringify(descriptions[0]));
+      const faceDesc = JSON.stringify(Array.from(descriptions[0]));
+      setFaceDescription(faceDesc); // Gọi hàm để cập nhật faceDescription ở Register
     } else {
-      setFaceDescription('No face detected.');
+      setFaceDescription(null);
     }
   };
 
@@ -42,7 +42,7 @@ const WebcamCapture = () => {
   const retake = () => {
     setImage(null);
     setIsCaptured(false);
-    setFaceDescription(null);
+    setFaceDescription(null); // Reset faceDescription khi chụp lại
   };
 
   return (
@@ -53,25 +53,19 @@ const WebcamCapture = () => {
             audio={false}
             ref={webcamRef}
             screenshotFormat="image/jpeg"
-            width={400}
-            height={300}
+            width={600}
+            height={450}
           />
           <br />
-          <button onClick={capture}>Chụp ảnh</button>
+          <button onClick={capture}>Take a photo</button>
         </>
       ) : (
         <>
           <img id="captured-image" src={image} alt="Captured" width={400} height={300} />
           <br />
-          <button onClick={analyzeImage}>Phân tích khuôn mặt</button>
-          <button onClick={retake}>Chụp lại</button>
+          <button onClick={analyzeImage} style={{ marginRight: '20px' }}>Facial analysis</button>
+          <button onClick={retake}>Retake</button>
         </>
-      )}
-      {faceDescription && (
-        <div>
-          <h3>Mô tả khuôn mặt:</h3>
-          <p>{faceDescription}</p>
-        </div>
       )}
     </div>
   );
