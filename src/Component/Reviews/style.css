@@ -1,0 +1,125 @@
+.reviews-container {
+    margin: auto;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.reviews-container h2 {
+    margin-top: 0;
+    text-align: center;
+    color: #333;
+}
+
+.reviews-container label {
+    font-weight: bold;
+    display: block;
+    margin-top: 15px;
+}
+
+.reviews-container select,
+.reviews-container textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.reviews-container .stars-container {
+    display: flex;
+    margin: 10px 0;
+}
+
+.reviews-container textarea {
+    height: 100px;
+}
+
+.reviews-container button {
+    margin-top: 10px;
+    padding: 10px 15px;
+    color: white;
+    background-color: #28a745;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.reviews-container button:hover {
+    background-color: #218838;
+}
+
+.reviews-container .reviews-post {
+    width: 30%;
+}
+
+.reviews-list-item {
+    box-shadow: 5px 10px #c3c1c1;
+    border: 1px solid #c3c1c1;
+    padding: 20px;
+    border-radius: 10px;
+    width: 50%;
+    max-height: 400px;
+    overflow-y: scroll;
+}
+
+.reviews-container .review-item {
+    box-shadow: 5px 10px #c3c1c1;
+    border: 1px solid #c3c1c1;
+    padding: 20px;
+    max-height: 150px;
+    margin-bottom: 30px;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.reviews-container .review-item:last-child {
+    border-bottom: none;
+}
+
+.reviews-container .review-item p {
+    margin: 7px 0;
+}
+
+.reviews-container .review-item .item-parkinglotname{
+    font-size: 10px;
+    font-style: italic;
+}
+
+.reviews-container .review-item strong {
+    color: #007bff;
+}
+
+.reviews-container .edit-button,
+.reviews-container .delete-button {
+    margin-right: 10px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+}
+
+.reviews-container .edit-button,
+.reviews-container .delete-button {
+    top: -110px;
+    left: 80%;
+}
+
+.reviews-container .edit-button {
+    background-color: #007bff;
+    color: white;
+}
+
+.reviews-container .delete-button {
+    background-color: #dc3545;
+    color: white;
+}
+
+.reviews-container .edit-button:hover {
+    background-color: #0056b3;
+}
+
+.reviews-container .delete-button:hover {
+    background-color: #c82333;
+}

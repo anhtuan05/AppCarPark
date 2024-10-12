@@ -88,9 +88,13 @@ const Booking = () => {
     }
   };
 
+  function formatDateTime(isoDateTime) {
+    const date = isoDateTime.replace('Z', '');
+    return date.replace('T', ' ');
+  }
   return (
     <div>
-      {user ? (
+      {user && user.is_staff === false && user.is_superuser === false ? (
         <div className="booking-container">
 
 
@@ -144,9 +148,9 @@ const Booking = () => {
                 <tr key={booking.id}>
                   <td>{booking.id}</td>
                   <td>{booking.spot}</td>
-                  <td>{booking.vehicle}</td>
-                  <td>{new Date(booking.start_time).toLocaleString()}</td>
-                  <td>{new Date(booking.end_time).toLocaleString()}</td>
+                  <td>{booking.vehicle_license_plate}</td>
+                  <td>{formatDateTime(booking.start_time)}</td>
+                  <td>{formatDateTime(booking.end_time)}</td>
                   <td>{booking.total_hours}</td>
                   <td>{booking.status}</td>
                 </tr>

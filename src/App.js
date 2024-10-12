@@ -16,6 +16,9 @@ import Footer from './Component/Footer';
 import Parking from './Component/Parking';
 import ReNewSub from './Component/ReNewSub';
 import Staff from './Component/Staff';
+import Report from './Component/Admin/Report';
+import Reviews from './Component/Reviews';
+import PersonalInfo from './Component/PersonalInfo';
 
 
 
@@ -36,7 +39,10 @@ function App() {
             <Route path='/login' element={<Login />} />
             <Route path='/register' element={<Register />} />
             <Route path='/staff' element={<Staff />} />
+            <Route path='/report' element={<Report />} />
             <Route path='/re-new-sub' element={<ReNewSub />} />
+            <Route path='/reviews' element={<Reviews />} />PersonalInfo
+            <Route path='/personal-info' element={<PersonalInfo />} />
           </Routes>
         </div>
         <Footer />

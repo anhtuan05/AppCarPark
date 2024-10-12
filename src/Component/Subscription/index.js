@@ -105,7 +105,7 @@ const Subscription = () => {
 
     return (
         <div>
-            {user ? (
+            {user && user.is_staff === false && user.is_superuser === false ? (
                 <div className="subscription-container">
                     <h2>Register Subscription</h2>
                     <div className="subscription-options">

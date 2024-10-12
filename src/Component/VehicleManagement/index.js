@@ -88,7 +88,7 @@ const VehicleManagement = () => {
 
   return (
     <div>
-      {user ? (
+      {user && user.is_staff === false && user.is_superuser === false ? (
         <div className="vehicle-management">
 
           <h1 className="vehicle-title ">Vehicle Management</h1>

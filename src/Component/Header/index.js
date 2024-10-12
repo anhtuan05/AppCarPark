@@ -63,7 +63,7 @@ function Header() {
                                     <Link to="/contactUs">Contact Us</Link>
                                 </div>
                             </li>
-                            <li>{user && user.username ? (<Link to="/personalInfo">{user.username}</Link>) : null}</li>
+                            <li>{user && user.username ? (<Link to="/personal-info">{user.username}</Link>) : null}</li>
                         </>
                     )}
 

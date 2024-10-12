@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Car } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { endpoints } from '../../API';
 import API from '../../API';
 import './style.css';
+import CarParkContext from '../../CarParkContext'
 
 const Parking = () => {
+    const [user, dispatch] = useContext(CarParkContext)
     const navigate = useNavigate();
     const [parkingLots, setParkingLots] = useState([]);
     const [parkingSpots, setParkingSpots] = useState([]);

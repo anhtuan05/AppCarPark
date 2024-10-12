@@ -31,7 +31,7 @@
     left: 45%;
     transition: background-color 0.3s ease;
     transition: padding 0.3s ease;
-    transition: font-size 0.3s ease;
+    transition: font-size padding 0.3s ease;
 }
 
 .booking-button span {
@@ -40,6 +40,6 @@
 
 .booking-button:hover {
     background-color: #45a049;
-    font-size: 18px;
+    font-size: 17px;
     padding: 15px 25px;
 }

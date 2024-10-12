@@ -71,7 +71,7 @@ const ReNewSub = () => {
 
     return (
         <div>
-            {user ? (
+            {user && user.is_staff === false && user.is_superuser === false ? (
                 <div className="renew-container">
                     <h2>Renew Subscription</h2>
 

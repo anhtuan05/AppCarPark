@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './style.css';
 import WebcamCapture from '../WebcamCapture';
 import FormData from 'form-data';
+import { ClipLoader } from 'react-spinners';
 import API, { endpoints } from '../../API';
 
 function Register() {
@@ -18,8 +19,8 @@ function Register() {
   });
 
   const [agree, setAgree] = useState(false);
-  const [skipFaceDescription, setSkipFaceDescription] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,6 +30,26 @@ function Register() {
     }));
   };
 
+  const handleFaceRecognition = async () => {
+    if (user.face_description) {
+      const formData = new FormData();
+      formData.append('face_description', user.face_description);
+
+      try {
+        const response = await API.post(endpoints['faceRecognition'], formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        console.log('Access token retrieved:', response.data.access_token);
+        return response.data.access_token;
+      } catch (error) {
+        console.log('Error during face recognition', error);
+        return null;
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -36,34 +57,36 @@ function Register() {
       setErrorMessage('Passwords do not match.');
       return;
     }
+    if (user.face_description !== "") {
+      const faceRecognitionResult = await handleFaceRecognition();
+      if (faceRecognitionResult === null) {
 
-    if (user.face_description === null && !skipFaceDescription) {
-      setErrorMessage('You must agree to skip the face description.');
-      return;
-    }
-
-    setErrorMessage(''); // Reset error message
-
-    let form = new FormData();
-    for (let key in user) {
-      form.append(key, user[key]);
-    }
-
-    try {
-
-      let res = await API.post(endpoints['register'], form, {
-        headers: {
-          "Content-Type": 'application/json'
+        setErrorMessage(''); // Reset error message
+        let form = new FormData();
+        for (let key in user) {
+          form.append(key, user[key]);
         }
-      });
-      alert('Success: User registered successfully with face');
-    } catch (error) {
-      alert('Error_catch', `Failed to register user: ${error.message}`);
-    } finally {
 
+        try {
+          setLoading(true);
+          let res = await API.post(endpoints['register'], form, {
+            headers: {
+              "Content-Type": 'application/json'
+            }
+          });
+          alert('Success: User registered successfully with face');
+        } catch (error) {
+          alert('Error_catch');
+        } finally {
+          setLoading(false);
+        }
+
+      } else {
+        alert('Face already exists.');
+      }
+    } else {
+      alert('Please capture face data.');
     }
-
-
   };
 
   const handleFaceDescriptionAlert = (description) => {
@@ -169,21 +192,14 @@ function Register() {
             I agree to <a href="/terms" target='blank'>the terms</a> of use
           </label>
         </div>
-        <div className="terms-box">
-          <input
-            id="skip-face-description"
-            type="checkbox"
-            checked={skipFaceDescription}
-            onChange={() => setSkipFaceDescription(!skipFaceDescription)}
-          />
-          <label htmlFor="skip-face-description">
-            I agree to skip the face description if not available
-          </label>
-        </div>
         {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-        <button className="btn-login" type="submit" disabled={!agree}>
-          Register
-        </button>
+        {loading ? (
+          <ClipLoader color={"#09f"} loading={loading} size={50} />
+        ) : (
+          <button className="btn-login" type="submit" disabled={!agree}>
+            Register
+          </button>
+        )}
       </form>
       <div className="img-right-register">
         <WebcamCapture

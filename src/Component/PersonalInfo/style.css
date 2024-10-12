@@ -1,0 +1,32 @@
+.personal-info-container {
+    padding: 20px;
+    margin: auto;
+}
+
+.personal-info-container h2 {
+    margin-bottom: 20px;
+}
+
+.personal-info-container input {
+    display: block;
+    margin-bottom: 10px;
+    padding: 10px;
+    width: 100%;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+th,
+td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
