@@ -93,7 +93,7 @@ const Report = () => {
 
     // revenueData -> real
     const lineData = {
-        labels: Object.keys(revenueDataFake),
+        labels: Object.keys(revenueData),
         datasets: [
             {
                 label: 'Revenue',
@@ -101,7 +101,7 @@ const Report = () => {
                 borderColor: 'rgba(255, 99, 132, 1)',
                 borderWidth: 1,
                 fill: true,
-                data: Object.values(revenueDataFake)
+                data: Object.values(revenueData)
             }
         ]
     };
