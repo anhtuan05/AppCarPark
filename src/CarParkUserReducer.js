@@ -1,15 +1,18 @@
-import cookie from "react-cookies"
+import tokenStorage from './shared/api/tokenStorage';
+
 const CarParkUserReducer = (currentState, action) => {
-    switch (action.type) {
-        case 'login':
-            return action.payload;
-        case 'logout':
-            cookie.remove("token");
-            cookie.remove("user");
-            return null;
-        default:
-            return currentState;
-    }
+  switch (action.type) {
+    case 'login':
+      if (action.payload) {
+        tokenStorage.setUser(action.payload);
+      }
+      return action.payload;
+    case 'logout':
+      tokenStorage.clearAll();
+      return null;
+    default:
+      return currentState;
+  }
 };
 
 export default CarParkUserReducer;
