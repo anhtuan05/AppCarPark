@@ -1,13 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+  
+  --color-brand-green: #008000;
+  --color-brand-green-dark: #006400;
+  --color-brand-teal: #088F8F;
+  --color-brand-dark-teal: #008B8B;
+}
+
+:root {
+  --main-bg-color: #008000;
+  --main-bg-color2: rgba(98, 186, 98, 0.32);
+  --main-hover-color: #006400;
+  --main-dropmenu-color: #008B8B;
+  --main-text-color: #333333;
+  --main-text-color-w: #ffffff;
+  --main-btn-color-green: #28a745;
+  --main-btn-color-blue: #088F8F;
+  --main-textshadow-color: #ed105d;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
