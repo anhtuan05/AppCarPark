@@ -7,9 +7,13 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
 
 # production
 /build
+/dist
+.env
 
 # misc
 .DS_Store

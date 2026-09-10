@@ -1,27 +1,21 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  UserCheck,
-  LogIn,
   ScanFace,
   Car,
-  Camera,
   CheckCircle2,
-  AlertCircle,
   Loader2,
-  ArrowRight,
-  ShieldCheck,
-  Clock,
-  KeyRound,
-  FileCheck,
 } from 'lucide-react';
+import Alert from '../../shared/ui/Alert';
 import CarParkContext from '../../CarParkContext';
 import WebcamCapture from '../../features/face-recognition/components/WebcamCapture';
 import staffService from '../../features/staff/api/staffApi';
 import authService from '../../features/auth/api/authApi';
-import './style.css';
+import { formatDateTime } from '../../i18n/formatters';
+import garageBg from '../../Img/garage-bg.webp';
 
 export function Staff() {
+  const { t, i18n } = useTranslation();
   const [user] = useContext(CarParkContext);
   const [currentTab, setCurrentTab] = useState('entry'); // 'entry' or 'exit'
 
@@ -75,14 +69,16 @@ export function Staff() {
     setFeedback(null);
   };
 
-  useEffect(() => {
+  const handleTabChange = (nextTab) => {
+    if (nextTab === currentTab) return;
     resetWorkflow();
-  }, [currentTab]);
+    setCurrentTab(nextTab);
+  };
 
   // Authenticate staff/driver via face descriptor
   const handleFaceRecognition = async () => {
     if (!faceDescription) {
-      setFeedback({ type: 'error', message: 'Please capture a facial photo first.' });
+      setFeedback({ type: 'error', key: 'staff.captureFace' });
       return;
     }
 
@@ -95,15 +91,16 @@ export function Staff() {
         setAccessToken(res.token.access_token);
         setFeedback({
           type: 'success',
-          message: 'Biometric identity verified successfully. Access token granted.',
+          key: 'staff.faceVerified',
         });
       } else {
-        setFeedback({ type: 'error', message: 'Face descriptor not recognized in database.' });
+        setFeedback({ type: 'error', key: 'staff.faceUnknown' });
       }
     } catch (err) {
       setFeedback({
         type: 'error',
-        message: 'Face authentication failed: ' + (err.response?.data?.detail || err.message),
+        key: 'staff.faceError',
+        values: { detail: err.response?.data?.detail || err.message },
       });
     } finally {
       setIsRecognizingFace(false);
@@ -113,7 +110,7 @@ export function Staff() {
   // Recognize license plate from car image
   const handleCarPlateRecognition = async () => {
     if (!selectedCarImage) {
-      setFeedback({ type: 'error', message: 'Please choose or snap a vehicle photo first.' });
+      setFeedback({ type: 'error', key: 'staff.chooseVehiclePhoto' });
       return;
     }
 
@@ -124,12 +121,12 @@ export function Staff() {
       const plate = await staffService.recognizeLicensePlate(selectedCarImage);
       if (plate) {
         setLicensePlate(plate);
-        setFeedback({ type: 'success', message: `License plate detected: ${plate}` });
+        setFeedback({ type: 'success', key: 'staff.plateDetected', values: { plate } });
       } else {
-        setFeedback({ type: 'error', message: 'No license plate detected in the photo.' });
+        setFeedback({ type: 'error', key: 'staff.plateUnknown' });
       }
     } catch (err) {
-      setFeedback({ type: 'error', message: 'Error reading license plate: ' + err.message });
+      setFeedback({ type: 'error', key: 'staff.plateError', values: { detail: err.message } });
     } finally {
       setIsReadingPlate(false);
     }
@@ -140,7 +137,7 @@ export function Staff() {
     if (!licensePlate || !selectedCarImage) {
       setFeedback({
         type: 'error',
-        message: 'Both vehicle image and license plate are required for entry logging.',
+        key: 'staff.entryRequired',
       });
       return;
     }
@@ -151,11 +148,12 @@ export function Staff() {
     try {
       const res = await staffService.recordCarEntry(selectedCarImage, licensePlate, accessToken);
       setEntryData(res);
-      setFeedback({ type: 'success', message: 'Vehicle Entry successfully recorded in system!' });
+      setFeedback({ type: 'success', key: 'staff.entrySuccess' });
     } catch (err) {
       setFeedback({
         type: 'error',
-        message: 'Error recording vehicle entry: ' + (err.response?.data?.detail || err.message),
+        key: 'staff.entryError',
+        values: { detail: err.response?.data?.detail || err.message },
       });
     } finally {
       setIsLoading(false);
@@ -167,7 +165,7 @@ export function Staff() {
     if (!licensePlate || !selectedCarImage) {
       setFeedback({
         type: 'error',
-        message: 'Both vehicle image and license plate are required for exit logging.',
+        key: 'staff.exitRequired',
       });
       return;
     }
@@ -178,94 +176,77 @@ export function Staff() {
     try {
       const res = await staffService.recordCarExit(selectedCarImage, licensePlate, accessToken);
       setEntryData(res);
-      setFeedback({ type: 'success', message: 'Vehicle Exit successfully recorded and spot freed!' });
+      setFeedback({ type: 'success', key: 'staff.exitSuccess' });
     } catch (err) {
       setFeedback({
         type: 'error',
-        message: 'Error recording vehicle exit: ' + (err.response?.data?.detail || err.message),
+        key: 'staff.exitError',
+        values: { detail: err.response?.data?.detail || err.message },
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!user || user.is_staff !== true || user.is_superuser === true) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[360px] bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm text-center">
-        <ShieldCheck className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-4" />
-        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-          Staff Gate Operator Portal
-        </h3>
-        <p className="text-sm text-slate-500 max-w-md mb-6">
-          Access to automated gate entry and exit verification is restricted to authorized parking staff.
-        </p>
-        <Link
-          to="/login"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition-all"
-        >
-          <LogIn className="w-5 h-5" />
-          <span>Staff Login</span>
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Gate Entry & Exit Console
-          </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Operator: <span className="font-bold text-emerald-600">@{user.username}</span> | Smart Barrier Control
-          </p>
+      {/* High-tech Gate Operator Terminal Banner */}
+      <div className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-emerald-950 p-6 sm:p-8 text-white shadow-2xl">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <img
+            src={garageBg}
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-cover opacity-25 mix-blend-screen scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/98 via-emerald-950/85 to-teal-950/70" />
+          <div className="absolute -bottom-8 right-10 h-44 w-44 rounded-full bg-emerald-400/15 blur-3xl" />
+          <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
         </div>
 
-        {/* Tab Toggle */}
-        <div className="flex items-center p-1.5 bg-slate-200 dark:bg-slate-800 rounded-2xl">
-          <button
-            type="button"
-            onClick={() => setCurrentTab('entry')}
-            className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-              currentTab === 'entry'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-            }`}
-          >
-            Vehicle Entry
-          </button>
-          <button
-            type="button"
-            onClick={() => setCurrentTab('exit')}
-            className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-              currentTab === 'exit'
-                ? 'bg-teal-600 text-white shadow-md'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-            }`}
-          >
-            Vehicle Exit
-          </button>
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/25 text-emerald-300 text-xs font-semibold tracking-wide uppercase">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>Gate Terminal Active</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white drop-shadow-sm">
+              {t('staff.title')}
+            </h1>
+            <p className="text-sm text-emerald-100/80">
+              {t('staff.operator', { username: user.username })}
+            </p>
+          </div>
+
+          {/* Tab Toggle */}
+          <div className="flex items-center p-1.5 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 shadow-inner">
+            <button
+              type="button"
+              onClick={() => handleTabChange('entry')}
+              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                currentTab === 'entry'
+                  ? 'bg-emerald-500 text-slate-950 shadow-lg font-black shadow-emerald-500/25'
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              {t('staff.entryTab')}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabChange('exit')}
+              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                currentTab === 'exit'
+                  ? 'bg-teal-400 text-slate-950 shadow-lg font-black shadow-teal-500/25'
+                  : 'text-white/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              {t('staff.exitTab')}
+            </button>
+          </div>
         </div>
       </div>
 
-      {feedback && (
-        <div
-          className={`p-4 rounded-2xl flex items-center gap-3 text-sm font-medium ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              : 'bg-rose-50 text-rose-700 border border-rose-200'
-          }`}
-        >
-          {feedback.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-          ) : (
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          )}
-          <span>{feedback.message}</span>
-        </div>
-      )}
+      {feedback ? <Alert type={feedback.type}>{t(feedback.key, feedback.values)}</Alert> : null}
 
       {/* Main Workflow Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -276,13 +257,13 @@ export function Staff() {
               1
             </span>
             <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
-              Driver Face Verification
+              {t('staff.faceStep')}
             </h3>
           </div>
 
           <WebcamCapture
             setFaceDescription={setFaceDescription}
-            title="Driver Facial Snapshot"
+            title={t('staff.faceSnapshot')}
           />
 
           <button
@@ -296,7 +277,7 @@ export function Staff() {
             ) : (
               <ScanFace className="w-5 h-5" />
             )}
-            <span>Verify Biometrics</span>
+            <span>{t('staff.verify')}</span>
           </button>
         </div>
 
@@ -308,15 +289,17 @@ export function Staff() {
                 2
               </span>
               <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">
-                License Plate Scanner
+                {t('staff.plateStep')}
               </h3>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                Upload or Capture Car Photo
+              <label htmlFor="staff-car-image" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                {t('staff.uploadPhoto')}
               </label>
               <input
+                id="staff-car-image"
+                name="car_image"
                 type="file"
                 accept="image/*"
                 onChange={handleCarImageChange}
@@ -328,7 +311,9 @@ export function Staff() {
               <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-950 flex items-center justify-center">
                 <img
                   src={carImagePreviewUrl}
-                  alt="Selected Car"
+                  width="640"
+                  height="360"
+                  alt={t('staff.selectedCarAlt')}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -336,7 +321,7 @@ export function Staff() {
 
             {licensePlate && (
               <div className="p-4 rounded-2xl bg-slate-900 text-white flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-semibold uppercase">Detected Plate:</span>
+                <span className="text-xs text-slate-400 font-semibold uppercase">{t('staff.detectedPlate')}</span>
                 <span className="text-lg font-mono font-bold text-emerald-400 tracking-wider">
                   {licensePlate}
                 </span>
@@ -356,7 +341,7 @@ export function Staff() {
               ) : (
                 <Car className="w-5 h-5" />
               )}
-              <span>Scan License Plate</span>
+              <span>{t('staff.scanPlate')}</span>
             </button>
 
             {currentTab === 'entry' ? (
@@ -371,7 +356,7 @@ export function Staff() {
                 ) : (
                   <CheckCircle2 className="w-5 h-5" />
                 )}
-                <span>Authorize & Open Entry Gate</span>
+                <span>{t('staff.authorizeEntry')}</span>
               </button>
             ) : (
               <button
@@ -385,7 +370,7 @@ export function Staff() {
                 ) : (
                   <CheckCircle2 className="w-5 h-5" />
                 )}
-                <span>Authorize & Open Exit Gate</span>
+                <span>{t('staff.authorizeExit')}</span>
               </button>
             )}
           </div>
@@ -398,24 +383,28 @@ export function Staff() {
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-6 h-6 text-emerald-600" />
             <h4 className="font-bold text-emerald-900 dark:text-emerald-200 text-lg">
-              Transaction Successfully Verified
+              {t('staff.transactionSuccess')}
             </h4>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm pt-2">
             <div className="p-3 bg-white dark:bg-slate-900 rounded-xl">
-              <span className="text-xs text-slate-500 block">Assigned Spot</span>
-              <span className="font-bold text-slate-900 dark:text-white">Spot #{entryData.spot || 'N/A'}</span>
+              <span className="text-xs text-slate-500 block">{t('staff.assignedSpot')}</span>
+              <span className="font-bold text-slate-900 dark:text-white">{t('staff.spotValue', { id: entryData.spot || t('common.notAvailable') })}</span>
             </div>
             <div className="p-3 bg-white dark:bg-slate-900 rounded-xl">
-              <span className="text-xs text-slate-500 block">Pass Reference</span>
+              <span className="text-xs text-slate-500 block">{t('staff.passReference')}</span>
               <span className="font-bold text-slate-900 dark:text-white">
-                {entryData.subscription ? `Sub #${entryData.subscription}` : `Booking #${entryData.booking || 'N/A'}`}
+                {entryData.subscription
+                  ? t('staff.subscriptionReference', { id: entryData.subscription })
+                  : t('staff.bookingReference', { id: entryData.booking || t('common.notAvailable') })}
               </span>
             </div>
             <div className="p-3 bg-white dark:bg-slate-900 rounded-xl">
-              <span className="text-xs text-slate-500 block">Timestamp</span>
+              <span className="text-xs text-slate-500 block">{t('staff.timestamp')}</span>
               <span className="font-bold text-slate-900 dark:text-white">
-                {entryData.entry_time || entryData.exit_time || 'Recorded'}
+                {entryData.entry_time || entryData.exit_time
+                  ? formatDateTime(entryData.entry_time || entryData.exit_time, i18n.resolvedLanguage, t('staff.recorded'))
+                  : t('staff.recorded')}
               </span>
             </div>
           </div>

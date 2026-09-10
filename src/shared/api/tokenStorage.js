@@ -2,6 +2,11 @@ import Cookies from 'js-cookie';
 
 const TOKEN_KEY = 'token';
 const USER_KEY = 'user';
+const COOKIE_OPTIONS = {
+  expires: 7,
+  sameSite: 'strict',
+  secure: globalThis.location?.protocol === 'https:',
+};
 
 export const tokenStorage = {
   getToken: () => {
@@ -21,9 +26,9 @@ export const tokenStorage = {
 
   setToken: (tokenData) => {
     if (typeof tokenData === 'object') {
-      Cookies.set(TOKEN_KEY, JSON.stringify(tokenData), { expires: 7, sameSite: 'lax' });
+      Cookies.set(TOKEN_KEY, JSON.stringify(tokenData), COOKIE_OPTIONS);
     } else {
-      Cookies.set(TOKEN_KEY, JSON.stringify({ access_token: tokenData }), { expires: 7, sameSite: 'lax' });
+      Cookies.set(TOKEN_KEY, JSON.stringify({ access_token: tokenData }), COOKIE_OPTIONS);
     }
   },
 
@@ -38,7 +43,7 @@ export const tokenStorage = {
   },
 
   setUser: (userData) => {
-    Cookies.set(USER_KEY, JSON.stringify(userData), { expires: 7, sameSite: 'lax' });
+    Cookies.set(USER_KEY, JSON.stringify(userData), COOKIE_OPTIONS);
   },
 
   clearAll: () => {

@@ -1,25 +1,52 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "name": "Green Car Park — Bãi Đỗ Xe Thông Minh",
+  "short_name": "GreenCarPark",
+  "description": "Nền tảng đặt chỗ, quản lý vé tháng và ra vào bãi đỗ xe thông minh bằng nhận diện khuôn mặt và camera ANPR.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#022c22",
+  "background_color": "#022c22",
+  "orientation": "portrait-primary",
+  "lang": "vi-VN",
+  "dir": "ltr",
+  "categories": [
+    "lifestyle",
+    "travel",
+    "utilities",
+    "business"
+  ],
   "icons": [
     {
-      "src": "favicon.ico",
+      "src": "/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
     },
     {
-      "src": "logo512.png",
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo192.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  ]
 }

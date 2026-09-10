@@ -1,258 +1,265 @@
-import React, { useState, useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { LogIn, Calendar, Clock, Car, CheckCircle2, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
-import CarParkContext from '../../CarParkContext';
+import React, { useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import {
+  ArrowLeft,
+  CalendarCheck,
+  Car,
+  CheckCircle2,
+  Clock3,
+  History,
+  LoaderCircle,
+} from 'lucide-react';
+import Alert from '../../shared/ui/Alert';
 import { useVehiclesQuery } from '../../features/vehicles/queries/useVehicleQueries';
 import { useBookingsQuery, useCreateBookingMutation } from '../../features/booking/queries/useBookingQueries';
-import './style.css';
+import { formatDateTime, translateStatus } from '../../i18n/formatters';
+import bookingBg from '../../Img/booking-bg.webp';
 
-export const Booking = () => {
-  const [user] = useContext(CarParkContext);
+function StatusBadge({ status }) {
+  const { t } = useTranslation();
+  const normalizedStatus = status || 'Confirmed';
+  const isConfirmed = ['confirmed', 'active', 'completed'].includes(normalizedStatus.toLowerCase());
+  return (
+    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ${
+      isConfirmed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+    }`}>
+      {translateStatus(t, normalizedStatus)}
+    </span>
+  );
+}
+
+export function Booking() {
+  const { t, i18n } = useTranslation();
   const { spotId } = useParams();
-
   const { data: vehicles = [], isLoading: vehiclesLoading } = useVehiclesQuery();
   const { data: bookingHistory = [], isLoading: historyLoading } = useBookingsQuery();
   const createBookingMutation = useCreateBookingMutation();
-
   const [selectedVehicle, setSelectedVehicle] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [feedback, setFeedback] = useState(null);
 
-  const handleBookingSubmit = async (e) => {
-    e.preventDefault();
+  const handleBookingSubmit = async (event) => {
+    event.preventDefault();
     setFeedback(null);
 
     if (!selectedVehicle || !startTime || !endTime) {
-      setFeedback({ type: 'error', message: 'Please select a vehicle and specify start & end times.' });
+      setFeedback({ type: 'error', key: 'booking.validationRequired' });
       return;
     }
 
     if (new Date(startTime) >= new Date(endTime)) {
-      setFeedback({ type: 'error', message: 'Start time must be before end time.' });
+      setFeedback({ type: 'error', key: 'booking.validationEnd' });
       return;
     }
 
-    const bookingData = {
-      spot: spotId,
-      vehicle: selectedVehicle,
-      start_time: startTime,
-      end_time: endTime,
-    };
-
     try {
-      const res = await createBookingMutation.mutateAsync(bookingData);
-      setFeedback({
-        type: 'success',
-        message: `Booking for Spot #${spotId} confirmed successfully!`,
+      const response = await createBookingMutation.mutateAsync({
+        spot: spotId,
+        vehicle: selectedVehicle,
+        start_time: startTime,
+        end_time: endTime,
       });
 
-      // Clear form
+      setFeedback({ type: 'success', key: 'booking.success', values: { id: spotId } });
       setSelectedVehicle('');
       setStartTime('');
       setEndTime('');
 
-      if (res?.short_link) {
-        window.open(res.short_link, '_blank');
+      if (response?.short_link) {
+        window.open(response.short_link, '_blank', 'noopener,noreferrer');
       }
     } catch (error) {
+      const detail = error.response?.data?.detail || error.message;
       setFeedback({
         type: 'error',
-        message: 'Error submitting booking: ' + (error.response?.data?.detail || error.message),
+        key: 'booking.error',
+        values: { detail: detail || t('booking.tryAgain') },
       });
     }
   };
 
-  const formatDateTime = (isoDateTime) => {
-    if (!isoDateTime) return 'N/A';
-    const clean = isoDateTime.replace('Z', '').replace('T', ' ');
-    return clean;
-  };
-
-  if (!user || user.is_staff === true || user.is_superuser === true) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[360px] bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm text-center">
-        <Clock className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-4" />
-        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-          Login Required to Reserve Spot
-        </h3>
-        <p className="text-sm text-slate-500 max-w-md mb-6">
-          Please log in with your customer account to complete spot reservations.
-        </p>
-        <Link
-          to="/login"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition-all"
-        >
-          <LogIn className="w-5 h-5" />
-          <span>Login to Account</span>
-        </Link>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center gap-3">
+    <div className="mx-auto max-w-5xl space-y-7 sm:space-y-9">
+      <header className="flex items-start gap-3">
         <Link
           to="/parking"
-          className="p-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
+          aria-label={t('common.backToParking')}
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
         </Link>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Reserve Parking Spot #{spotId}
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">{t('booking.eyebrow')}</p>
+          <h1 className="mt-1 text-balance font-display text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+            {t('booking.spotTitle', { id: spotId })}
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-            Complete the reservation details below to secure your spot.
-          </p>
+          <p className="mt-1 text-sm text-slate-600">{t('booking.intro')}</p>
         </div>
-      </div>
+      </header>
 
-      {/* Booking Form Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-        {feedback && (
-          <div
-            className={`p-4 rounded-xl flex items-center gap-3 text-sm font-medium ${
-              feedback.type === 'success'
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-rose-50 text-rose-700 border border-rose-200'
-            }`}
-          >
-            {feedback.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            )}
-            <span>{feedback.message}</span>
+      <section className="grid overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm lg:grid-cols-[0.72fr_1.28fr]" aria-labelledby="booking-form-title">
+        <div className="relative overflow-hidden bg-emerald-950 p-5 text-white sm:p-7 lg:p-8">
+          {/* Background Image & Gradient Scrim */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+            <img
+              src={bookingBg}
+              alt=""
+              aria-hidden="true"
+              className="h-full w-full object-cover object-center opacity-25 mix-blend-screen scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/95 via-emerald-950/85 to-teal-950/90" />
+            <div className="absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-emerald-400/15 blur-2xl" />
           </div>
-        )}
 
-        <form onSubmit={handleBookingSubmit} className="space-y-6">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-              Select Vehicle *
-            </label>
-            {vehiclesLoading ? (
-              <div className="text-xs text-slate-500">Loading vehicles...</div>
-            ) : vehicles.length > 0 ? (
-              <select
-                value={selectedVehicle}
-                onChange={(e) => setSelectedVehicle(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              >
-                <option value="">-- Choose registered vehicle --</option>
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.license_plate} - {v.brand} ({v.car_model})
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="p-3 bg-amber-50 rounded-xl text-xs text-amber-800 border border-amber-200 flex items-center justify-between">
-                <span>No registered vehicles found. Please add a vehicle first.</span>
-                <Link to="/vehicleManagement" className="font-bold underline text-amber-900">
-                  Add Vehicle
-                </Link>
+          <div className="relative z-10">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-emerald-950 shadow-md shadow-emerald-950/40">
+              <CalendarCheck className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <h2 id="booking-form-title" className="mt-5 font-display text-2xl font-black">{t('booking.formTitle')}</h2>
+            <p className="mt-3 text-sm leading-6 text-emerald-50/70">{t('booking.formDescription')}</p>
+            <ul className="mt-6 space-y-3 text-sm font-semibold text-emerald-100">
+              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-300" aria-hidden="true" /> {t('booking.instantUpdates')}</li>
+              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-300" aria-hidden="true" /> {t('booking.securePayment')}</li>
+              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-300" aria-hidden="true" /> {t('booking.easyHistory')}</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="p-5 sm:p-7 lg:p-8">
+          {feedback ? (
+            <Alert type={feedback.type} className="mb-5">{t(feedback.key, feedback.values)}</Alert>
+          ) : null}
+
+          <form onSubmit={handleBookingSubmit} className="space-y-5" autoComplete="off">
+            <div>
+              <label htmlFor="booking-vehicle" className="mb-2 block text-sm font-bold text-slate-700">{t('booking.vehicle')} <span className="text-rose-600" aria-hidden="true">*</span></label>
+              {vehiclesLoading ? (
+                <div className="flex min-h-12 items-center gap-2 rounded-xl bg-slate-100 px-4 text-sm text-slate-500" role="status">
+                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> {t('booking.loadingVehicles')}
+                </div>
+              ) : vehicles.length ? (
+                <select
+                  id="booking-vehicle"
+                  name="vehicle"
+                  value={selectedVehicle}
+                  onChange={(event) => setSelectedVehicle(event.target.value)}
+                  required
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 transition-[border-color,box-shadow,background-color] focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-100"
+                >
+                  <option value="">{t('booking.chooseVehicle')}</option>
+                  {vehicles.map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.license_plate} — {vehicle.brand} {vehicle.car_model}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  {t('booking.noVehicleStart')} <Link to="/vehicle-management" className="font-black underline underline-offset-2">{t('booking.addVehicle')}</Link> {t('booking.noVehicleEnd')}
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="booking-start" className="mb-2 block text-sm font-bold text-slate-700">{t('common.start')} <span className="text-rose-600" aria-hidden="true">*</span></label>
+                <input
+                  id="booking-start"
+                  name="start_time"
+                  type="datetime-local"
+                  value={startTime}
+                  onChange={(event) => setStartTime(event.target.value)}
+                  required
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 transition-[border-color,box-shadow,background-color] focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-100"
+                />
               </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                Start Time *
-              </label>
-              <input
-                type="datetime-local"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              />
+              <div>
+                <label htmlFor="booking-end" className="mb-2 block text-sm font-bold text-slate-700">{t('common.end')} <span className="text-rose-600" aria-hidden="true">*</span></label>
+                <input
+                  id="booking-end"
+                  name="end_time"
+                  type="datetime-local"
+                  value={endTime}
+                  onChange={(event) => setEndTime(event.target.value)}
+                  required
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 transition-[border-color,box-shadow,background-color] focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-100"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                End Time *
-              </label>
-              <input
-                type="datetime-local"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              />
-            </div>
+            <button
+              type="submit"
+              disabled={createBookingMutation.isPending || vehicles.length === 0}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-6 py-3 text-sm font-black text-white shadow-sm transition-[background-color,transform] hover:bg-emerald-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            >
+              {createBookingMutation.isPending ? <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" /> : <CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
+              {createBookingMutation.isPending ? t('booking.confirming') : t('booking.confirm')}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section aria-labelledby="history-title">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">{t('booking.recent')}</p>
+            <h2 id="history-title" className="mt-1 font-display text-xl font-black text-slate-950 sm:text-2xl">{t('booking.history')}</h2>
           </div>
-
-          <button
-            type="submit"
-            disabled={createBookingMutation.isPending || vehicles.length === 0}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl shadow-md transition-all transform active:scale-95 disabled:opacity-50"
-          >
-            {createBookingMutation.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <CheckCircle2 className="w-5 h-5" />
-            )}
-            <span>Confirm Reservation</span>
-          </button>
-        </form>
-      </div>
-
-      {/* Booking History Table */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-          My Booking History ({bookingHistory.length})
-        </h2>
+          <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-black text-slate-700">{t('booking.visits', { count: bookingHistory.length })}</span>
+        </div>
 
         {historyLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+          <div className="flex min-h-40 items-center justify-center rounded-2xl border border-slate-200 bg-white" role="status">
+            <LoaderCircle className="h-6 w-6 animate-spin text-emerald-700" aria-hidden="true" />
+            <span className="sr-only">{t('booking.loadingHistory')}</span>
           </div>
-        ) : bookingHistory.length > 0 ? (
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
-            <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
-              <thead className="bg-slate-50 dark:bg-slate-800/60 text-xs uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                <tr>
-                  <th className="px-4 py-3.5">ID</th>
-                  <th className="px-4 py-3.5">Spot</th>
-                  <th className="px-4 py-3.5">License Plate</th>
-                  <th className="px-4 py-3.5">Start Time</th>
-                  <th className="px-4 py-3.5">End Time</th>
-                  <th className="px-4 py-3.5">Hours</th>
-                  <th className="px-4 py-3.5">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-normal">
-                {bookingHistory.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="px-4 py-3.5 font-bold text-slate-900 dark:text-white">#{booking.id}</td>
-                    <td className="px-4 py-3.5">Spot #{booking.spot}</td>
-                    <td className="px-4 py-3.5 font-mono font-semibold">{booking.vehicle_license_plate || 'N/A'}</td>
-                    <td className="px-4 py-3.5 text-xs text-slate-500">{formatDateTime(booking.start_time)}</td>
-                    <td className="px-4 py-3.5 text-xs text-slate-500">{formatDateTime(booking.end_time)}</td>
-                    <td className="px-4 py-3.5 font-semibold">{booking.total_hours ?? '-'} hrs</td>
-                    <td className="px-4 py-3.5">
-                      <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        {booking.status || 'Confirmed'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        ) : bookingHistory.length ? (
+          <>
+            <div className="grid gap-3 md:hidden">
+              {bookingHistory.map((booking) => (
+                <article key={booking.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700"><Car className="h-5 w-5" aria-hidden="true" /></span>
+                      <div className="min-w-0"><h3 className="truncate font-black text-slate-950">{t('booking.spotTitle', { id: booking.spot })}</h3><p className="truncate font-mono text-xs font-bold text-slate-500">{booking.vehicle_license_plate || t('booking.noPlate')}</p></div>
+                    </div>
+                    <StatusBadge status={booking.status} />
+                  </div>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-xs">
+                    <div><dt className="text-slate-500">{t('common.start')}</dt><dd className="mt-1 font-bold text-slate-800">{formatDateTime(booking.start_time, i18n.resolvedLanguage, t('common.notAvailable'))}</dd></div>
+                    <div><dt className="text-slate-500">{t('common.end')}</dt><dd className="mt-1 font-bold text-slate-800">{formatDateTime(booking.end_time, i18n.resolvedLanguage, t('common.notAvailable'))}</dd></div>
+                  </dl>
+                </article>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
+              <table className="w-full min-w-[780px] text-left text-sm">
+                <thead className="border-b border-slate-200 bg-slate-50 text-xs font-black uppercase tracking-wider text-slate-500">
+                  <tr><th className="px-4 py-3.5">{t('common.id')}</th><th className="px-4 py-3.5">{t('common.spot')}</th><th className="px-4 py-3.5">{t('common.licensePlate')}</th><th className="px-4 py-3.5">{t('common.start')}</th><th className="px-4 py-3.5">{t('common.end')}</th><th className="px-4 py-3.5">{t('booking.duration')}</th><th className="px-4 py-3.5">{t('common.status')}</th></tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {bookingHistory.map((booking) => (
+                    <tr key={booking.id} className="transition-colors hover:bg-slate-50">
+                      <td className="px-4 py-3.5 font-black text-slate-950">#{booking.id}</td><td className="px-4 py-3.5">#{booking.spot}</td><td className="px-4 py-3.5 font-mono font-bold">{booking.vehicle_license_plate || t('common.notAvailable')}</td><td className="px-4 py-3.5 text-xs">{formatDateTime(booking.start_time, i18n.resolvedLanguage, t('common.notAvailable'))}</td><td className="px-4 py-3.5 text-xs">{formatDateTime(booking.end_time, i18n.resolvedLanguage, t('common.notAvailable'))}</td><td className="px-4 py-3.5 font-bold">{t('common.hours', { count: booking.total_hours ?? 0 })}</td><td className="px-4 py-3.5"><StatusBadge status={booking.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
-          <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500">
-            No booking history found.
+          <div className="flex min-h-44 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
+            <History className="h-9 w-9 text-slate-300" aria-hidden="true" />
+            <p className="mt-3 font-bold text-slate-700">{t('booking.emptyTitle')}</p>
+            <p className="mt-1 text-sm text-slate-500">{t('booking.emptyDescription')}</p>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
-};
+}
 
 export default Booking;

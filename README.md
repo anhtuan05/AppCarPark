@@ -1,70 +1,85 @@
-# Getting Started with Create React App
+# Green Car Park Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Giao diện web cho hệ thống bãi đỗ xe thông minh: theo dõi chỗ trống, đặt chỗ theo giờ, quản lý vé tháng, phương tiện, phản hồi và xác thực khuôn mặt.
 
-## Available Scripts
+## Công nghệ
 
-In the project directory, you can run:
+- React 18 + React Router 6
+- Vite 8
+- Tailwind CSS 4
+- TanStack React Query 5 + Axios
+- face-api.js + react-webcam
+- Chart.js
+- ESLint 10
 
-### `yarn start`
+## Chạy dự án
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Yêu cầu: Node.js 22+ và pnpm.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+pnpm install
+Copy-Item .env.example .env
+pnpm dev
+```
 
-### `yarn test`
+Ứng dụng mặc định chạy tại `http://localhost:3000`.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Để làm việc không cần backend, đặt biến sau trong `.env`:
 
-### `yarn build`
+```env
+VITE_USE_MOCK_API=true
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Biến môi trường
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| Biến | Mục đích |
+| --- | --- |
+| `VITE_API_BASE_URL` | Base URL của Django API |
+| `VITE_OAUTH_CLIENT_ID` | OAuth public client ID |
+| `VITE_OAUTH_CLIENT_SECRET` | Chỉ hỗ trợ backend cũ; không nên dùng trong production |
+| `VITE_PLATE_RECOGNIZER_TOKEN` | Token Plate Recognizer, nếu bật tích hợp thật |
+| `VITE_USE_MOCK_API` | Bật dữ liệu mẫu khi phát triển |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+> Mọi biến bắt đầu bằng `VITE_` đều được đưa vào bundle phía trình duyệt. Không lưu bí mật production trong các biến này.
 
-### `yarn eject`
+## Lệnh thường dùng
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+pnpm dev      # chạy development server
+pnpm lint     # kiểm tra JavaScript/React Hooks
+pnpm build    # tạo production bundle trong dist/
+pnpm check    # chạy lint rồi build
+pnpm preview  # xem production bundle cục bộ
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Cấu trúc chính
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```text
+src/
+├── Component/              # màn hình và layout theo route
+├── features/               # API, query hooks và logic theo domain
+│   ├── auth/
+│   ├── booking/
+│   ├── face-recognition/
+│   ├── parking/
+│   ├── reviews/
+│   ├── staff/
+│   ├── subscription/
+│   └── vehicles/
+├── shared/
+│   ├── api/                # Axios client, endpoint, token và mock data
+│   └── providers/          # React Query provider
+├── App.jsx                 # app shell + lazy routes
+└── main.jsx                # điểm khởi tạo React
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Các màn hình được lazy-load theo route. `face-api.js` và `Chart.js` nằm trong bundle riêng nên không chặn lần tải trang chủ đầu tiên.
 
-## Learn More
+## Responsive & accessibility
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- Mobile: nội dung một cột, CTA toàn chiều rộng, lịch sử đặt chỗ dạng card.
+- Tablet: menu drawer thay cho thanh điều hướng dài; form và grid tự co giãn.
+- Desktop: navigation đầy đủ, layout nhiều cột và bảng dữ liệu.
+- Có skip link, focus-visible, touch target tối thiểu, `prefers-reduced-motion`, nhãn form và trạng thái `aria-live`.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Xem [CODEBASE_REVIEW.md](./docs/CODEBASE_REVIEW.md) để biết các cải tiến đã thực hiện và backlog kỹ thuật đề xuất.

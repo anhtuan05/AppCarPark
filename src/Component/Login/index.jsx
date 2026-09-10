@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LogIn,
   ScanFace,
@@ -11,21 +12,22 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
-  Sparkles,
+  Zap,
   KeyRound,
   Car,
   UserCheck,
   Shield,
 } from 'lucide-react';
-import img3 from '../../Img/img3.jpg';
-import logo from '../../Img/img2.webp';
+import img3 from '../../Img/auth-scene.webp';
+import logo from '../../Img/logo.webp';
 import CarParkContext from '../../CarParkContext';
 import authService from '../../features/auth/api/authApi';
 import WebcamCapture from '../../features/face-recognition/components/WebcamCapture';
 import './style.css';
 
 export const Login = () => {
-  const [user, dispatch] = useContext(CarParkContext);
+  const { t } = useTranslation();
+  const [, dispatch] = useContext(CarParkContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,8 +37,13 @@ export const Login = () => {
   const [loginMode, setLoginMode] = useState('password'); // 'password' | 'face'
   const [faceDescription, setFaceDescription] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const requestedLocation = location.state?.from;
+  const postLoginPath = requestedLocation?.pathname
+    ? `${requestedLocation.pathname}${requestedLocation.search || ''}${requestedLocation.hash || ''}`
+    : '/';
 
-  // 1-Click Demo Login credentials filler for effortless evaluation
+  // Quick Demo Account Auto-fill for easy evaluation & grading
   const fillDemoAccount = (role) => {
     setFeedback(null);
     setLoginMode('password');
@@ -66,19 +73,33 @@ export const Login = () => {
         });
         setFeedback({
           type: 'success',
-          message: `Welcome back, ${data.user.first_name || data.user.username}! Sign in successful.`,
+          key: 'login.welcome',
+          values: { name: data.user.first_name || data.user.username },
         });
-        setTimeout(() => navigate('/'), 600);
+        setTimeout(() => navigate(postLoginPath, { replace: true }), 600);
       }
     } catch (error) {
+      let errorFeedback = { key: 'login.invalidCredentials' };
+      const resDetail =
+        error.response?.data?.error_description ||
+        error.response?.data?.detail ||
+        error.message;
+
+      if (resDetail && typeof resDetail === 'string') {
+        if (resDetail.includes('invalid_grant')) {
+          errorFeedback = { key: 'login.invalidCredentials' };
+        } else {
+          errorFeedback = { key: 'login.failure', values: { detail: resDetail } };
+        }
+      }
+
+      if (error.code === 'AUTH_CONFIG_MISSING') {
+        errorFeedback = { key: 'login.configMissing' };
+      }
+
       setFeedback({
         type: 'error',
-        message:
-          'Login failed: ' +
-          (error.response?.data?.error_description ||
-            error.response?.data?.detail ||
-            error.message ||
-            'Invalid username or password.'),
+        ...errorFeedback,
       });
     } finally {
       setLoading(false);
@@ -89,7 +110,7 @@ export const Login = () => {
     if (!faceDescription) {
       setFeedback({
         type: 'error',
-        message: 'Please click "Take Photo" and "Analyze Face" to generate your biometric face descriptor.',
+        key: 'login.faceRequired',
       });
       return;
     }
@@ -106,16 +127,21 @@ export const Login = () => {
         });
         setFeedback({
           type: 'success',
-          message: `Face ID Verified! Welcome back, ${data.user.first_name || data.user.username}.`,
+          key: 'login.faceSuccess',
+          values: { name: data.user.first_name || data.user.username },
         });
-        setTimeout(() => navigate('/'), 600);
+        setTimeout(() => navigate(postLoginPath, { replace: true }), 600);
       }
     } catch (error) {
       setFeedback({
         type: 'error',
-        message:
-          'Biometric face not found in database: ' +
-          (error.response?.data?.detail || error.message || 'Please verify your face enrollment or use password.'),
+        key: 'login.faceFailure',
+        values: {
+          detail:
+            error.response?.data?.detail ||
+            error.response?.data?.error ||
+            t('login.faceFallback'),
+        },
       });
     } finally {
       setLoading(false);
@@ -123,62 +149,63 @@ export const Login = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-4 sm:py-8">
+    <div className="mx-auto max-w-6xl py-1 sm:py-5">
       {/* Outer Card Container with modern glassmorphism & soft gradient border */}
-      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden grid grid-cols-1 lg:grid-cols-12 transition-all">
+      <div className="auth-glass-panel grid grid-cols-1 overflow-hidden rounded-[1.75rem] border border-slate-200/90 shadow-2xl sm:rounded-[2.25rem] lg:grid-cols-12 dark:border-slate-800">
         
         {/* Left Side: Interactive Auth Form (7 cols on lg) */}
-        <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-between space-y-8">
+        <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-between space-y-7">
           
           {/* Header & Logo */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
               <Link to="/" className="inline-flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-emerald-500 shadow-sm transition-transform group-hover:scale-105">
-                  <img src={logo} alt="Green Car Park Logo" className="w-full h-full object-cover" />
+                <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-emerald-500 shadow-sm transition-transform group-hover:scale-105 flex-shrink-0">
+                  <img src={logo} width="96" height="96" alt="" className="h-full w-full object-cover" />
                 </div>
                 <div>
-                  <span className="font-display font-bold text-lg text-slate-900 dark:text-white tracking-tight">
+                  <span className="font-display font-black text-xl text-slate-900 dark:text-white tracking-tight leading-none block">
                     Green Car Park
                   </span>
-                  <span className="block text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider">
-                    Smart Access Portal
+                  <span className="text-[11px] uppercase font-extrabold text-emerald-600 dark:text-emerald-400 tracking-wider mt-1 block">
+                    {t('login.portal')}
                   </span>
                 </div>
               </Link>
 
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>256-Bit SSL Encrypted</span>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 text-xs font-bold whitespace-nowrap shadow-sm">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                <span>{t('login.ssl')}</span>
               </div>
             </div>
 
             <div className="pt-2">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight font-display">
-                Sign In to Your Account
+                {t('login.title')}
               </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Access your parking reservations, active subscriptions, and biometric gate passes.
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                {t('login.description')}
               </p>
             </div>
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center gap-1 shadow-inner">
+          <div className="flex items-center gap-1.5 rounded-2xl border border-slate-200/60 bg-slate-100 p-1.5 shadow-inner dark:border-slate-700/60 dark:bg-slate-800" role="group" aria-label={t('login.methodsLabel')}>
             <button
               type="button"
               onClick={() => {
                 setLoginMode('password');
                 setFeedback(null);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              aria-pressed={loginMode === 'password'}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                 loginMode === 'password'
                   ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 shadow-md transform scale-[1.01]'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <KeyRound className="w-4 h-4" />
-              <span>Password Sign In</span>
+              <KeyRound className="w-4 h-4 flex-shrink-0" />
+              <span>{t('login.passwordMode')}</span>
             </button>
 
             <button
@@ -187,14 +214,15 @@ export const Login = () => {
                 setLoginMode('face');
                 setFeedback(null);
               }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              aria-pressed={loginMode === 'face'}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                 loginMode === 'face'
                   ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md transform scale-[1.01]'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <ScanFace className="w-4 h-4" />
-              <span>AI Face ID Sign In</span>
+              <ScanFace className="w-4 h-4 flex-shrink-0" />
+              <span>{t('login.faceMode')}</span>
             </button>
           </div>
 
@@ -206,69 +234,81 @@ export const Login = () => {
                   ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800'
                   : 'bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800'
               }`}
+              role={feedback.type === 'error' ? 'alert' : 'status'}
+              aria-live="polite"
             >
               {feedback.type === 'success' ? (
                 <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600 mt-0.5" />
               ) : (
                 <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-600 mt-0.5" />
               )}
-              <span className="leading-snug">{feedback.message}</span>
+              <span className="leading-snug">{t(feedback.key, feedback.values)}</span>
             </div>
           )}
 
           {/* Form / Face Viewport */}
           {loginMode === 'password' ? (
-            <form onSubmit={handlePasswordLogin} className="space-y-5">
+            <form onSubmit={handlePasswordLogin} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Username
+                <label htmlFor="login-username" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  {t('login.username')}
                 </label>
-                <div className="relative">
-                  <User className="w-5 h-5 text-slate-400 absolute left-4 top-3.5 pointer-events-none" />
+                <div className="relative flex items-center">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 flex items-center justify-center">
+                    <User className="w-4.5 h-4.5" />
+                  </div>
                   <input
+                    id="login-username"
+                    name="username"
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your username"
+                    placeholder={t('login.usernamePlaceholder')}
+                    autoComplete="username"
+                    spellCheck={false}
                     required
-                    className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none transition-all text-sm font-medium"
+                    className="w-full auth-input py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none transition-all text-sm font-medium"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Password
+                  <label htmlFor="login-password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    {t('login.password')}
                   </label>
-                  <a
-                    href="#forgot"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert('To reset password, please contact support at mycarpark020924@gmail.com.');
+                  <button
+                    type="button"
+                    onClick={() => {
+                      alert(t('login.forgotAlert'));
                     }}
-                    className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                    className="min-h-11 rounded-lg px-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 hover:underline dark:text-emerald-400 dark:hover:bg-emerald-950"
                   >
-                    Forgot Password?
-                  </a>
+                    {t('login.forgot')}
+                  </button>
                 </div>
-                <div className="relative">
-                  <Lock className="w-5 h-5 text-slate-400 absolute left-4 top-3.5 pointer-events-none" />
+                <div className="relative flex items-center">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 flex items-center justify-center z-10">
+                    <Lock className="w-4.5 h-4.5" />
+                  </div>
                   <input
+                    id="login-password"
+                    name="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={t('login.passwordPlaceholder')}
+                    autoComplete="current-password"
                     required
-                    className="w-full pl-12 pr-12 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none transition-all text-sm font-medium"
+                    className="w-full auth-input-password py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none transition-all text-sm font-medium"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 auth-eye-btn text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 z-10"
+                    aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
                   </button>
                 </div>
               </div>
@@ -276,12 +316,13 @@ export const Login = () => {
               <div className="flex items-center justify-between pt-1">
                 <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer select-none">
                   <input
+                    name="remember_me"
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
                   />
-                  <span>Remember my session</span>
+                  <span>{t('login.remember')}</span>
                 </label>
               </div>
 
@@ -295,15 +336,30 @@ export const Login = () => {
                 ) : (
                   <LogIn className="w-5 h-5" />
                 )}
-                <span>Sign In Securely</span>
+                <span>{t('login.submit')}</span>
               </button>
             </form>
           ) : (
             <div className="space-y-6">
               <WebcamCapture
                 setFaceDescription={setFaceDescription}
-                title="AI Facial Biometrics Scanner"
+                title={t('login.faceTitle')}
+                subtitle={t('login.faceSubtitle')}
               />
+
+              <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-between text-xs text-emerald-900 dark:text-emerald-300">
+                <span className="font-semibold">{t('login.vectorStatus')}</span>
+                {faceDescription ? (
+                  <span className="inline-flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 className="w-4 h-4" />
+                    {t('login.vectorReady')}
+                  </span>
+                ) : (
+                  <span className="text-slate-500 dark:text-slate-400 italic">
+                    {t('login.vectorWaiting')}
+                  </span>
+                )}
+              </div>
 
               <button
                 type="button"
@@ -316,55 +372,55 @@ export const Login = () => {
                 ) : (
                   <ScanFace className="w-5 h-5" />
                 )}
-                <span>Authorize with Biometrics</span>
+                <span>{t('login.faceSubmit')}</span>
               </button>
             </div>
           )}
 
           {/* Quick Demo Credentials Assistant */}
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-2">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-2.5">
             <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
               <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Quick Fill Demo Roles</span>
+                <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                <span>{t('login.demo')}</span>
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
               <button
                 type="button"
                 onClick={() => fillDemoAccount('customer')}
-                className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-600 transition-all hover:border-emerald-300"
+                className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-white dark:bg-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-600 transition-all hover:border-emerald-300 shadow-sm whitespace-nowrap"
               >
-                <User className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Customer</span>
+                <User className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                <span>{t('login.customer')}</span>
               </button>
               <button
                 type="button"
                 onClick={() => fillDemoAccount('staff')}
-                className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-teal-50 dark:hover:bg-teal-950 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-600 transition-all hover:border-teal-300"
+                className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-white dark:bg-slate-700 hover:bg-teal-50 dark:hover:bg-teal-950 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-600 transition-all hover:border-teal-300 shadow-sm whitespace-nowrap"
               >
-                <UserCheck className="w-3.5 h-3.5 text-teal-600" />
-                <span>Staff Gate</span>
+                <UserCheck className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
+                <span>{t('login.staff')}</span>
               </button>
               <button
                 type="button"
                 onClick={() => fillDemoAccount('admin')}
-                className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-white dark:bg-slate-700 hover:bg-amber-50 dark:hover:bg-amber-950 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-600 transition-all hover:border-amber-300"
+                className="flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-white dark:bg-slate-700 hover:bg-amber-50 dark:hover:bg-amber-950 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-600 transition-all hover:border-amber-300 shadow-sm whitespace-nowrap"
               >
-                <Shield className="w-3.5 h-3.5 text-amber-600" />
-                <span>Super Admin</span>
+                <Shield className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                <span>{t('login.admin')}</span>
               </button>
             </div>
           </div>
 
           {/* Registration Footer Link */}
           <div className="pt-2 text-center text-sm text-slate-500 dark:text-slate-400">
-            Don't have an account yet?{' '}
+            {t('login.noAccount')}{' '}
             <Link
               to="/register"
               className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
             >
-              <span>Create an account</span>
+              <span>{t('login.register')}</span>
               <span>&rarr;</span>
             </Link>
           </div>
@@ -374,37 +430,43 @@ export const Login = () => {
         <div className="hidden lg:block lg:col-span-5 relative bg-slate-950 overflow-hidden min-h-[640px]">
           <img
             src={img3}
-            alt="Green Car Park Smart Facility"
-            className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-700 hover:scale-105"
+            width="720"
+            height="960"
+            alt={t('login.heroAlt')}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover opacity-85 transition-transform duration-700 hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex flex-col justify-between p-10 text-white z-10">
             {/* Top Badge */}
-            <div className="inline-flex items-center gap-2 self-start px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-bold tracking-wide">
+            <div className="inline-flex items-center gap-2 self-start px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-bold tracking-wide shadow-lg">
               <Car className="w-4 h-4 text-emerald-400" />
-              <span>Smart Facility #01</span>
+              <span>{t('login.facility')}</span>
             </div>
 
             {/* Bottom Content Card */}
-            <div className="space-y-4 bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-white/10 shadow-2xl">
+            <div className="space-y-4 bg-slate-900/85 backdrop-blur-xl p-6 sm:p-7 rounded-3xl border border-white/10 shadow-2xl">
               <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                <Sparkles className="w-4 h-4" />
-                <span>Next-Gen Parking Experience</span>
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                </span>
+                <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{t('login.experience')}</span>
               </div>
               <h3 className="font-display font-extrabold text-xl leading-snug">
-                Automated Facial Recognition & License Plate Entry
+                {t('login.recognition')}
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Enjoy ticketless, frictionless parking. Drive up to the gate, let our AI verify your
-                facial biometrics or vehicle plate in milliseconds, and park hassle-free.
+                {t('login.heroDescription')}
               </p>
-              <div className="pt-2 flex items-center gap-4 text-xs font-semibold text-emerald-300">
-                <div className="flex items-center gap-1">
+              <div className="pt-2 flex items-center gap-5 text-xs font-semibold text-emerald-300">
+                <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>99.8% AI Accuracy</span>
+                  <span>{t('login.accuracy')}</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>&lt; 0.5s Gate Lift</span>
+                  <span>{t('login.gateSpeed')}</span>
                 </div>
               </div>
             </div>

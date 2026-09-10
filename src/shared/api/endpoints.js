@@ -5,44 +5,41 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://anhtua
 
 export const endpoints = {
   // Authentication & User
-  login: '/o/token/',
-  register: '/user/',
+  oauthToken: '/o/token/',
+  users: '/user/',
   currentUser: '/user/current-user/',
-  putUser: '/user/',
-  loginWithFace: '/user/login-with-face/',
-  faceRecognition: '/user/login-with-face/',
+  userProfile: '/user/',
+  faceLogin: '/user/login-with-face/',
 
   // Vehicles
-  vehicleManagement: '/vehicle/',
-  vehicleDetail: (id) => `/vehicle/${id}/`,
+  vehicles: '/vehicle/',
+  vehicleById: (id) => `/vehicle/${id}/`,
 
   // Parking & Spots
-  parkingLot: '/parkinglot/',
-  parkingSpot: '/parkingspot/',
-  ratings: '/parkinglot/ratings/',
+  parkingLots: '/parkinglot/',
+  parkingSpots: '/parkingspot/',
+  parkingRatings: '/parkinglot/ratings/',
 
   // Booking
-  booking: '/booking/',
+  bookings: '/booking/',
 
   // Subscriptions
-  subscriptionType: '/subscription-type/',
-  subscription: '/subscription/',
+  subscriptionTypes: '/subscription-type/',
+  subscriptions: '/subscription/',
   renewSubscription: (subId) => `/subscription/${subId}/renew-subscription/`,
 
   // Staff & Entry/Exit
-  entryExit: '/parking-history/',
+  parkingHistory: '/parking-history/',
 
   // Payments & Reports
-  payment: '/payment/',
-  revenueData: '/payment/revenue_statistics/',
+  payments: '/payment/',
+  revenueStatistics: '/payment/revenue_statistics/',
 
   // Reviews
   reviews: '/reviews/',
-  reviewDetail: (id) => `/reviews/${id}/`,
+  reviewById: (id) => `/reviews/${id}/`,
 
   // Third-party
-  plateRecognizer: 'https://api.platerecognizer.com/v1/plate-reader/',
+  plateRecognition: 'https://api.platerecognizer.com/v1/plate-reader/',
 };
-
-// Backward-compatible export for existing legacy callers
 export default endpoints;

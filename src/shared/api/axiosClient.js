@@ -43,32 +43,34 @@ axiosClient.interceptors.response.use(
     if (isMockEnabled && originalRequest) {
       const url = originalRequest.url || '';
       const method = (originalRequest.method || 'get').toLowerCase();
+      const requestPath = new URL(url, API_BASE_URL).pathname;
+      const matchesEndpoint = (endpoint) => requestPath === new URL(endpoint, API_BASE_URL).pathname;
 
-      if (url.includes(endpoints.parkingLot) && method === 'get') {
+      if (matchesEndpoint(endpoints.parkingLots) && method === 'get') {
         return { data: mockParkingLots, status: 200, statusText: 'OK (Mock)' };
       }
-      if (url.includes(endpoints.parkingSpot) && method === 'get') {
+      if (matchesEndpoint(endpoints.parkingSpots) && method === 'get') {
         return { data: mockParkingSpots, status: 200, statusText: 'OK (Mock)' };
       }
-      if (url.includes(endpoints.subscriptionType) && method === 'get') {
+      if (matchesEndpoint(endpoints.subscriptionTypes) && method === 'get') {
         return { data: mockSubscriptionTypes, status: 200, statusText: 'OK (Mock)' };
       }
-      if (url.includes(endpoints.vehicleManagement) && method === 'get') {
+      if (matchesEndpoint(endpoints.vehicles) && method === 'get') {
         return { data: mockVehicles, status: 200, statusText: 'OK (Mock)' };
       }
-      if (url.includes(endpoints.booking) && method === 'get') {
+      if (matchesEndpoint(endpoints.bookings) && method === 'get') {
         return { data: mockBookings, status: 200, statusText: 'OK (Mock)' };
       }
-      if (url.includes(endpoints.subscription) && method === 'get') {
+      if (matchesEndpoint(endpoints.subscriptions) && method === 'get') {
         return { data: mockSubscriptions, status: 200, statusText: 'OK (Mock)' };
       }
-      if (url.includes(endpoints.reviews) && method === 'get') {
+      if (matchesEndpoint(endpoints.reviews) && method === 'get') {
         return { data: mockReviews, status: 200, statusText: 'OK (Mock)' };
       }
-      if (url.includes(endpoints.revenueData) && method === 'get') {
+      if (matchesEndpoint(endpoints.revenueStatistics) && method === 'get') {
         return { data: mockRevenueData, status: 200, statusText: 'OK (Mock)' };
       }
-      if (url.includes(endpoints.ratings) && method === 'get') {
+      if (matchesEndpoint(endpoints.parkingRatings) && method === 'get') {
         return { data: mockRatingsData, status: 200, statusText: 'OK (Mock)' };
       }
     }

@@ -1,79 +1,115 @@
-:root {
-    --main-bg-color: #008000;
-    --main-bg-color2: #62ba6253;
-    --main-hover-color: #006400;
-    --main-dropmenu-color: #008B8B;
-    --main-text-color: #333333;
-    --main-text-color-w: #ffffff;
-    --main-btn-color-green: #28a745;
-    --main-btn-color-blue: #088F8F;
-    --main-textshadow-color: #ed105d;
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+  background:
+    radial-gradient(circle at 8% 6%, rgba(16, 185, 129, 0.1), transparent 28rem),
+    radial-gradient(circle at 96% 24%, rgba(13, 148, 136, 0.08), transparent 24rem),
+    #f8fafc;
 }
 
-
-body {
-    margin: 0 auto;
-    max-width: 100%;
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-160%);
+  border-radius: 0.75rem;
+  background: #ffffff;
+  padding: 0.75rem 1rem;
+  color: #065f46;
+  font-size: 0.875rem;
+  font-weight: 800;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  transition: transform 160ms ease;
 }
 
-a {
-    text-decoration: none;
-    color: var(--main-text-color);
-    cursor: pointer;
+.skip-link:focus-visible {
+  transform: translateY(0);
 }
 
-form {
-    background: white;
-    padding: 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+/* Page Transition Motion */
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.998);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-label {
-    display: block;
-    margin-bottom: 5px;
+.animate-page-enter {
+  animation: pageEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
 }
 
-input[type="text"],
-input[type="password"],
-input[type="email"],
-input[type="date"],
-input[type="tel"] {
-    padding: 8px;
-    box-sizing: border-box;
-    border-radius: 4px;
+/* Dropdown Entrance */
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-button {
-    padding: 15px 40px;
-    background-color: var(--main-btn-color-blue);
-    color: var(--main-text-color-w);
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
+.animate-fade-in-down {
+  animation: fadeInDown 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top;
 }
 
-button:disabled {
-    background-color: #cccccc;
-    cursor: auto;
+/* Smooth ambient float for hero badges and accent cards */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
-.must-be-logged {
-    height: 360px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 22px;
+.animate-float-slow {
+  animation: floatSlow 4.5s ease-in-out infinite;
 }
 
-.must-be-logged a{
-    text-decoration: underline;
-    margin-left: 20px;
-    padding: 10px;
-    border-radius: 10px;
+/* Micro-hover & lift interactive helpers */
+.hover-lift {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, background-color 0.2s ease;
 }
 
-.must-be-logged a:hover{
-    color: var(--main-hover-color);
-    background-color: var(--main-bg-color2);
+.hover-lift:hover {
+  transform: translateY(-3px);
+}
+
+.hover-lift:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.hover-lift-sm {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-lift-sm:hover {
+  transform: translateY(-1.5px);
+}
+
+.hover-lift-sm:active {
+  transform: translateY(0) scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skip-link,
+  .animate-page-enter,
+  .animate-fade-in-down,
+  .animate-float-slow,
+  .hover-lift,
+  .hover-lift-sm {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
 }

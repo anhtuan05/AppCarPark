@@ -1,32 +1,33 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   User,
   Car,
   Calendar,
   CreditCard,
   History,
-  LogIn,
   Pencil,
   CheckCircle2,
-  AlertCircle,
   Loader2,
   Shield,
   Clock,
   Phone,
   Mail,
 } from 'lucide-react';
+import Alert from '../../shared/ui/Alert';
 import CarParkContext from '../../CarParkContext';
 import authService from '../../features/auth/api/authApi';
 import staffService from '../../features/staff/api/staffApi';
 import bookingService from '../../features/booking/api/bookingApi';
 import subscriptionService from '../../features/subscription/api/subscriptionApi';
-import axiosClient from '../../shared/api/axiosClient';
-import { endpoints } from '../../shared/api/endpoints';
-import './style.css';
+import paymentService from '../../features/payments/api/paymentApi';
+import { formatCurrency, formatDate, formatDateTime, translateStatus } from '../../i18n/formatters';
+import profileBg from '../../Img/profile-bg.webp';
 
 export const PersonalInfo = () => {
+  const { t, i18n } = useTranslation();
   const [user, dispatch] = useContext(CarParkContext);
+  const userId = user?.id;
   const [activeTab, setActiveTab] = useState('profile');
 
   // State for data sections
@@ -52,7 +53,7 @@ export const PersonalInfo = () => {
           bookingService.getBookings(),
           subscriptionService.getSubscriptions(),
           staffService.getParkingHistory(),
-          axiosClient.get(endpoints.payment).then((r) => r.data),
+          paymentService.getPayments(),
         ]);
 
         if (isMounted) {
@@ -73,13 +74,13 @@ export const PersonalInfo = () => {
       }
     };
 
-    if (user) {
+    if (userId) {
       loadAllUserData();
     }
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [dispatch, userId]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -91,55 +92,38 @@ export const PersonalInfo = () => {
       setUserInfo(updated);
       dispatch({ type: 'login', payload: updated });
       setEditMode(false);
-      setFeedback({ type: 'success', message: 'Profile updated successfully!' });
+      setFeedback({ type: 'success', key: 'profile.updateSuccess' });
     } catch (error) {
       setFeedback({
         type: 'error',
-        message: 'Failed to update profile: ' + (error.response?.data?.detail || error.message),
+        key: 'profile.updateError',
+        values: { detail: error.response?.data?.detail || error.message },
       });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const formatPrice = (price) => {
-    if (!price && price !== 0) return '0đ';
-    return Number(price).toLocaleString('vi-VN') + 'đ';
-  };
-
-  const formatDateTime = (isoDateTime) => {
-    if (!isoDateTime) return 'N/A';
-    return isoDateTime.replace('Z', '').replace('T', ' ');
-  };
-
-  if (!user || user.is_staff === true || user.is_superuser === true) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[360px] bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm text-center">
-        <User className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-4" />
-        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-          Customer Login Required
-        </h3>
-        <p className="text-sm text-slate-500 max-w-md mb-6">
-          Please log in to view your personal information and complete parking history.
-        </p>
-        <Link
-          to="/login"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition-all"
-        >
-          <LogIn className="w-5 h-5" />
-          <span>Login to Account</span>
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      {/* Header Profile Badge */}
-      <div className="bg-gradient-to-r from-emerald-800 to-teal-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30">
-            <User className="w-10 h-10" />
+      {/* Header Profile VIP Biometric ID Card */}
+      <div className="relative overflow-hidden rounded-3xl border border-emerald-500/25 bg-emerald-950 p-6 sm:p-8 text-white shadow-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        {/* Background Image & Holographic Identity Scrim */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <img
+            src={profileBg}
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-cover object-right opacity-30 mix-blend-screen scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/98 via-emerald-950/85 to-teal-950/70" />
+          <div className="absolute -top-12 right-1/3 h-56 w-56 rounded-full bg-emerald-400/15 blur-3xl" />
+          <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent" />
+        </div>
+
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-teal-600/30 backdrop-blur-md flex items-center justify-center text-white border border-emerald-400/40 shadow-lg shadow-emerald-950/50">
+            <User className="w-10 h-10 text-emerald-300" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -148,11 +132,11 @@ export const PersonalInfo = () => {
                   ? `${userInfo.first_name} ${userInfo.last_name}`
                   : userInfo.username}
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/40 text-emerald-200 text-xs font-semibold uppercase">
-                Customer
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-400/20 border border-emerald-300/30 text-emerald-300 text-xs font-semibold uppercase backdrop-blur-md">
+                {t('profile.role')}
               </span>
             </div>
-            <p className="text-emerald-200 text-sm mt-1">@{userInfo.username}</p>
+            <p className="text-emerald-200/80 text-sm mt-1">@{userInfo.username}</p>
           </div>
         </div>
 
@@ -162,29 +146,14 @@ export const PersonalInfo = () => {
             setActiveTab('profile');
             setEditMode(!editMode);
           }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-sm font-semibold backdrop-blur-md border border-white/20 transition-all"
+          className="relative z-10 inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-semibold backdrop-blur-md border border-white/20 transition-all hover:-translate-y-0.5 active:scale-95"
         >
           <Pencil className="w-4 h-4" />
-          <span>{editMode ? 'Cancel Edit' : 'Edit Profile'}</span>
+          <span>{editMode ? t('profile.cancelEdit') : t('profile.edit')}</span>
         </button>
       </div>
 
-      {feedback && (
-        <div
-          className={`p-4 rounded-2xl flex items-center gap-3 text-sm font-medium ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              : 'bg-rose-50 text-rose-700 border border-rose-200'
-          }`}
-        >
-          {feedback.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-          ) : (
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          )}
-          <span>{feedback.message}</span>
-        </div>
-      )}
+      {feedback ? <Alert type={feedback.type}>{t(feedback.key, feedback.values)}</Alert> : null}
 
       {/* Tabs Navigation */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
@@ -198,7 +167,7 @@ export const PersonalInfo = () => {
           }`}
         >
           <User className="w-4 h-4" />
-          <span>Profile Info</span>
+          <span>{t('profile.profileTab')}</span>
         </button>
 
         <button
@@ -211,7 +180,7 @@ export const PersonalInfo = () => {
           }`}
         >
           <Car className="w-4 h-4" />
-          <span>Parking Activity ({parkingHistory.length})</span>
+          <span>{t('profile.parkingTab', { count: parkingHistory.length })}</span>
         </button>
 
         <button
@@ -224,7 +193,7 @@ export const PersonalInfo = () => {
           }`}
         >
           <Clock className="w-4 h-4" />
-          <span>Bookings ({bookings.length})</span>
+          <span>{t('profile.bookingsTab', { count: bookings.length })}</span>
         </button>
 
         <button
@@ -237,7 +206,7 @@ export const PersonalInfo = () => {
           }`}
         >
           <Calendar className="w-4 h-4" />
-          <span>Subscriptions ({subscriptions.length})</span>
+          <span>{t('profile.subscriptionsTab', { count: subscriptions.length })}</span>
         </button>
 
         <button
@@ -250,7 +219,7 @@ export const PersonalInfo = () => {
           }`}
         >
           <CreditCard className="w-4 h-4" />
-          <span>Payments ({payments.length})</span>
+          <span>{t('profile.paymentsTab', { count: payments.length })}</span>
         </button>
       </div>
 
@@ -264,11 +233,14 @@ export const PersonalInfo = () => {
           editMode ? (
             <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                  First Name
+                <label htmlFor="profile-first-name" className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                  {t('common.firstName')}
                 </label>
                 <input
+                  id="profile-first-name"
+                  name="first_name"
                   type="text"
+                  autoComplete="given-name"
                   value={formData.first_name || ''}
                   onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -276,11 +248,14 @@ export const PersonalInfo = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                  Last Name
+                <label htmlFor="profile-last-name" className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                  {t('common.lastName')}
                 </label>
                 <input
+                  id="profile-last-name"
+                  name="last_name"
                   type="text"
+                  autoComplete="family-name"
                   value={formData.last_name || ''}
                   onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -288,11 +263,15 @@ export const PersonalInfo = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                  Username
+                <label htmlFor="profile-username" className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                  {t('common.username')}
                 </label>
                 <input
+                  id="profile-username"
+                  name="username"
                   type="text"
+                  autoComplete="username"
+                  spellCheck={false}
                   value={formData.username || ''}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -300,11 +279,15 @@ export const PersonalInfo = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                  Email Address
+                <label htmlFor="profile-email" className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                  {t('profile.emailAddress')}
                 </label>
                 <input
+                  id="profile-email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
+                  spellCheck={false}
                   value={formData.email || ''}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -312,11 +295,14 @@ export const PersonalInfo = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                  Date of Birth
+                <label htmlFor="profile-birthday" className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                  {t('profile.dateOfBirth')}
                 </label>
                 <input
+                  id="profile-birthday"
+                  name="date_of_birth"
                   type="date"
+                  autoComplete="bday"
                   value={formData.date_of_birth || ''}
                   onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -324,11 +310,15 @@ export const PersonalInfo = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                  Phone Number
+                <label htmlFor="profile-phone" className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                  {t('common.phone')}
                 </label>
                 <input
-                  type="text"
+                  id="profile-phone"
+                  name="phone_number"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   value={formData.phone_number || ''}
                   onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -342,41 +332,41 @@ export const PersonalInfo = () => {
                   className="flex items-center justify-center gap-2 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition-all transform active:scale-95 disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
-                  <span>Save Changes</span>
+                  <span>{t('common.saveChanges')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditMode(false)}
                   className="px-6 py-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 space-y-1">
-                <span className="text-xs font-bold uppercase text-slate-400">First Name</span>
+                <span className="text-xs font-bold uppercase text-slate-400">{t('common.firstName')}</span>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">{userInfo.first_name || '-'}</p>
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 space-y-1">
-                <span className="text-xs font-bold uppercase text-slate-400">Last Name</span>
+                <span className="text-xs font-bold uppercase text-slate-400">{t('common.lastName')}</span>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">{userInfo.last_name || '-'}</p>
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 space-y-1">
-                <span className="text-xs font-bold uppercase text-slate-400">Username</span>
+                <span className="text-xs font-bold uppercase text-slate-400">{t('common.username')}</span>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">{userInfo.username || '-'}</p>
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 space-y-1">
-                <span className="text-xs font-bold uppercase text-slate-400">Email</span>
+                <span className="text-xs font-bold uppercase text-slate-400">{t('common.email')}</span>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">{userInfo.email || '-'}</p>
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 space-y-1">
-                <span className="text-xs font-bold uppercase text-slate-400">Date of Birth</span>
-                <p className="font-semibold text-slate-800 dark:text-slate-100">{userInfo.date_of_birth || '-'}</p>
+                <span className="text-xs font-bold uppercase text-slate-400">{t('profile.dateOfBirth')}</span>
+                <p className="font-semibold text-slate-800 dark:text-slate-100">{formatDate(userInfo.date_of_birth, i18n.resolvedLanguage, '—')}</p>
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 space-y-1">
-                <span className="text-xs font-bold uppercase text-slate-400">Phone Number</span>
+                <span className="text-xs font-bold uppercase text-slate-400">{t('common.phone')}</span>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">{userInfo.phone_number || '-'}</p>
               </div>
             </div>
@@ -387,26 +377,26 @@ export const PersonalInfo = () => {
               <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
                 <thead className="text-xs uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    <th className="py-3">Spot</th>
-                    <th className="py-3">License Plate</th>
-                    <th className="py-3">Entry Time</th>
-                    <th className="py-3">Exit Time</th>
+                    <th className="py-3">{t('common.spot')}</th>
+                    <th className="py-3">{t('common.licensePlate')}</th>
+                    <th className="py-3">{t('profile.entryTime')}</th>
+                    <th className="py-3">{t('profile.exitTime')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {parkingHistory.map((item) => (
                     <tr key={item.id}>
-                      <td className="py-3 font-bold">Spot #{item.spot}</td>
-                      <td className="py-3 font-mono">{item.vehicle_license_plate || 'N/A'}</td>
-                      <td className="py-3 text-xs text-slate-500">{formatDateTime(item.entry_time)}</td>
-                      <td className="py-3 text-xs text-slate-500">{formatDateTime(item.exit_time)}</td>
+                      <td className="py-3 font-bold">{t('staff.spotValue', { id: item.spot })}</td>
+                      <td className="py-3 font-mono">{item.vehicle_license_plate || t('common.notAvailable')}</td>
+                      <td className="py-3 text-xs text-slate-500">{formatDateTime(item.entry_time, i18n.resolvedLanguage, t('common.notAvailable'))}</td>
+                      <td className="py-3 text-xs text-slate-500">{formatDateTime(item.exit_time, i18n.resolvedLanguage, t('common.notAvailable'))}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-sm text-slate-500 text-center py-6">No parking activity found.</p>
+            <p className="text-sm text-slate-500 text-center py-6">{t('profile.parkingActivityEmpty')}</p>
           )
         ) : activeTab === 'bookings' ? (
           bookings.length > 0 ? (
@@ -414,30 +404,30 @@ export const PersonalInfo = () => {
               <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
                 <thead className="text-xs uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    <th className="py-3">ID</th>
-                    <th className="py-3">Spot</th>
-                    <th className="py-3">Plate</th>
-                    <th className="py-3">Start</th>
-                    <th className="py-3">End</th>
-                    <th className="py-3">Status</th>
+                    <th className="py-3">{t('common.id')}</th>
+                    <th className="py-3">{t('common.spot')}</th>
+                    <th className="py-3">{t('profile.plate')}</th>
+                    <th className="py-3">{t('common.start')}</th>
+                    <th className="py-3">{t('common.end')}</th>
+                    <th className="py-3">{t('common.status')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {bookings.map((b) => (
                     <tr key={b.id}>
                       <td className="py-3 font-bold">#{b.id}</td>
-                      <td className="py-3">Spot #{b.spot}</td>
-                      <td className="py-3 font-mono">{b.vehicle_license_plate || 'N/A'}</td>
-                      <td className="py-3 text-xs text-slate-500">{formatDateTime(b.start_time)}</td>
-                      <td className="py-3 text-xs text-slate-500">{formatDateTime(b.end_time)}</td>
-                      <td className="py-3 font-bold text-emerald-600">{b.status}</td>
+                      <td className="py-3">{t('staff.spotValue', { id: b.spot })}</td>
+                      <td className="py-3 font-mono">{b.vehicle_license_plate || t('common.notAvailable')}</td>
+                      <td className="py-3 text-xs text-slate-500">{formatDateTime(b.start_time, i18n.resolvedLanguage, t('common.notAvailable'))}</td>
+                      <td className="py-3 text-xs text-slate-500">{formatDateTime(b.end_time, i18n.resolvedLanguage, t('common.notAvailable'))}</td>
+                      <td className="py-3 font-bold text-emerald-600">{translateStatus(t, b.status)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-sm text-slate-500 text-center py-6">No bookings found.</p>
+            <p className="text-sm text-slate-500 text-center py-6">{t('profile.bookingsEmpty')}</p>
           )
         ) : activeTab === 'subscriptions' ? (
           subscriptions.length > 0 ? (
@@ -445,11 +435,11 @@ export const PersonalInfo = () => {
               <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
                 <thead className="text-xs uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    <th className="py-3">ID</th>
-                    <th className="py-3">Type</th>
-                    <th className="py-3">Start Date</th>
-                    <th className="py-3">End Date</th>
-                    <th className="py-3">Status</th>
+                    <th className="py-3">{t('common.id')}</th>
+                    <th className="py-3">{t('common.type')}</th>
+                    <th className="py-3">{t('subscription.startDate')}</th>
+                    <th className="py-3">{t('subscription.endDate')}</th>
+                    <th className="py-3">{t('common.status')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -457,16 +447,16 @@ export const PersonalInfo = () => {
                     <tr key={s.id}>
                       <td className="py-3 font-bold">#{s.id}</td>
                       <td className="py-3 font-semibold text-emerald-600">{s.subscription_type_name}</td>
-                      <td className="py-3 text-xs text-slate-500">{s.start_date}</td>
-                      <td className="py-3 text-xs text-slate-500">{s.end_date}</td>
-                      <td className="py-3 font-bold text-emerald-600">{s.status}</td>
+                      <td className="py-3 text-xs text-slate-500">{formatDate(s.start_date, i18n.resolvedLanguage, t('common.notAvailable'))}</td>
+                      <td className="py-3 text-xs text-slate-500">{formatDate(s.end_date, i18n.resolvedLanguage, t('common.notAvailable'))}</td>
+                      <td className="py-3 font-bold text-emerald-600">{translateStatus(t, s.status)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-sm text-slate-500 text-center py-6">No subscriptions found.</p>
+            <p className="text-sm text-slate-500 text-center py-6">{t('profile.subscriptionsEmpty')}</p>
           )
         ) : activeTab === 'payments' ? (
           payments.length > 0 ? (
@@ -474,18 +464,18 @@ export const PersonalInfo = () => {
               <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
                 <thead className="text-xs uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    <th className="py-3">ID</th>
-                    <th className="py-3">Amount</th>
-                    <th className="py-3">Method</th>
-                    <th className="py-3">Note</th>
+                    <th className="py-3">{t('common.id')}</th>
+                    <th className="py-3">{t('profile.amount')}</th>
+                    <th className="py-3">{t('common.method')}</th>
+                    <th className="py-3">{t('common.note')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {payments.map((p) => (
                     <tr key={p.id}>
                       <td className="py-3 font-bold">#{p.id}</td>
-                      <td className="py-3 font-bold text-emerald-600">{formatPrice(p.amount)}</td>
-                      <td className="py-3 font-semibold">{p.payment_method || 'Online'}</td>
+                      <td className="py-3 font-bold text-emerald-600">{formatCurrency(p.amount, i18n.resolvedLanguage)}</td>
+                      <td className="py-3 font-semibold">{p.payment_method || t('common.online')}</td>
                       <td className="py-3 text-xs text-slate-500">{p.payment_note || '-'}</td>
                     </tr>
                   ))}
@@ -493,7 +483,7 @@ export const PersonalInfo = () => {
               </table>
             </div>
           ) : (
-            <p className="text-sm text-slate-500 text-center py-6">No payment records found.</p>
+            <p className="text-sm text-slate-500 text-center py-6">{t('profile.paymentsEmpty')}</p>
           )
         ) : null}
       </div>

@@ -11,6 +11,7 @@ export const useFaceRecognition = ({ onDescriptorExtracted } = {}) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
   const [feedback, setFeedback] = useState(null);
+  const [cameraError, setCameraError] = useState(null);
 
   // Initialize face recognition models once
   useEffect(() => {
@@ -21,10 +22,11 @@ export const useFaceRecognition = ({ onDescriptorExtracted } = {}) => {
           if (mounted) setModelsReady(true);
         })
         .catch((err) => {
-          if (mounted) setError('Failed to load face detection neural models. Please check network/assets.');
+          console.error('Model loader error:', err);
+          if (mounted) {
+            setError({ key: 'face.modelError' });
+          }
         });
-    } else {
-      setModelsReady(true);
     }
     return () => {
       mounted = false;
@@ -33,15 +35,87 @@ export const useFaceRecognition = ({ onDescriptorExtracted } = {}) => {
 
   // Cleanup camera stream on unmount
   useEffect(() => {
+    const webcam = webcamRef.current;
     return () => {
-      if (webcamRef.current?.video?.srcObject) {
-        const stream = webcamRef.current.video.srcObject;
+      if (webcam?.video?.srcObject) {
+        const stream = webcam.video.srcObject;
         if (stream && typeof stream.getTracks === 'function') {
           stream.getTracks().forEach((track) => track.stop());
         }
       }
     };
   }, []);
+
+  // Core face analysis routine on a given image source (dataUrl / URL / image state)
+  const analyzeImageSrc = useCallback(
+    async (srcToAnalyze) => {
+      const targetSrc = srcToAnalyze || image;
+      if (!targetSrc) {
+        setError({ key: 'face.photoRequired' });
+        return null;
+      }
+
+      setIsAnalyzing(true);
+      setError(null);
+      setFeedback(null);
+
+      try {
+        if (!areModelsLoaded()) {
+          await loadFaceModels();
+        }
+
+        // Create an in-memory HTMLImageElement to detect faces cleanly
+        const imgElement = new Image();
+        imgElement.crossOrigin = 'anonymous';
+        imgElement.src = targetSrc;
+
+        await new Promise((resolve, reject) => {
+          imgElement.onload = resolve;
+          imgElement.onerror = () =>
+            reject(new Error('IMAGE_DECODE_ERROR'));
+        });
+
+        const detections = await faceapi
+          .detectAllFaces(imgElement)
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+
+        if (detections && detections.length > 0) {
+          const primaryDescriptor = detections[0].descriptor;
+          const serialized = serializeDescriptor(primaryDescriptor);
+          setFeedback({
+            success: true,
+            key: 'face.success',
+            values: { count: detections.length },
+          });
+          if (onDescriptorExtracted) {
+            onDescriptorExtracted(serialized);
+          }
+          return serialized;
+        } else {
+          setError({ key: 'face.noFace' });
+          if (onDescriptorExtracted) {
+            onDescriptorExtracted(null);
+          }
+          return null;
+        }
+      } catch (err) {
+        console.error('Error during face analysis:', err);
+        setError(
+          err.message === 'IMAGE_DECODE_ERROR'
+            ? { key: 'face.imageDecodeError' }
+            : { key: 'face.analysisError', values: { detail: err.message || undefined } },
+        );
+        if (onDescriptorExtracted) {
+          onDescriptorExtracted(null);
+        }
+        return null;
+      } finally {
+        setIsAnalyzing(false);
+      }
+    },
+    [image, onDescriptorExtracted]
+  );
 
   // Capture photo from webcam
   const capture = useCallback(() => {
@@ -52,66 +126,55 @@ export const useFaceRecognition = ({ onDescriptorExtracted } = {}) => {
       setIsCaptured(true);
       setError(null);
       setFeedback(null);
+      // Auto-analyze immediately after capture for better UX
+      analyzeImageSrc(screenshot);
     }
-  }, []);
+  }, [analyzeImageSrc]);
 
-  // Analyze captured image using face-api.js (in-memory Image, avoiding fragile DOM queries)
-  const analyzeImage = useCallback(async () => {
-    if (!image) {
-      setError('Please capture a photo first.');
-      return null;
-    }
+  // Upload an image from local file or sample data URL
+  const uploadImage = useCallback(
+    (fileOrDataUrl) => {
+      setError(null);
+      setFeedback(null);
 
-    setIsAnalyzing(true);
-    setError(null);
-    setFeedback(null);
+      if (!fileOrDataUrl) return;
 
-    try {
-      if (!areModelsLoaded()) {
-        await loadFaceModels();
+      if (typeof fileOrDataUrl === 'string') {
+        setImage(fileOrDataUrl);
+        setIsCaptured(true);
+        analyzeImageSrc(fileOrDataUrl);
+        return;
       }
 
-      // Create an in-memory HTMLImageElement
-      const imgElement = new Image();
-      imgElement.src = image;
-      await new Promise((resolve, reject) => {
-        imgElement.onload = resolve;
-        imgElement.onerror = reject;
-      });
-
-      const detections = await faceapi
-        .detectAllFaces(imgElement)
-        .withFaceLandmarks()
-        .withFaceDescriptors();
-
-      if (detections && detections.length > 0) {
-        const primaryDescriptor = detections[0].descriptor;
-        const serialized = serializeDescriptor(primaryDescriptor);
-        setFeedback({
-          success: true,
-          message: `Face successfully detected (${detections.length} face${detections.length > 1 ? 's' : ''} found).`,
-        });
-        if (onDescriptorExtracted) {
-          onDescriptorExtracted(serialized);
+      if (fileOrDataUrl instanceof File || fileOrDataUrl instanceof Blob) {
+        if (fileOrDataUrl.type && !fileOrDataUrl.type.startsWith('image/')) {
+          setError({ key: 'face.fileTypeError' });
+          return;
         }
-        return serialized;
-      } else {
-        setError('No face detected in the image. Please ensure good lighting and face the camera directly.');
-        if (onDescriptorExtracted) {
-          onDescriptorExtracted(null);
+
+        // Limit size to 10MB
+        if (fileOrDataUrl.size > 10 * 1024 * 1024) {
+          setError({ key: 'face.fileSizeError' });
+          return;
         }
-        return null;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target.result;
+          setImage(dataUrl);
+          setIsCaptured(true);
+          analyzeImageSrc(dataUrl);
+        };
+        reader.onerror = () => {
+          setError({ key: 'face.fileReadError' });
+        };
+        reader.readAsDataURL(fileOrDataUrl);
       }
-    } catch (err) {
-      console.error('Error during face analysis:', err);
-      setError('An error occurred during facial analysis: ' + (err.message || 'Unknown error'));
-      return null;
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }, [image, onDescriptorExtracted]);
+    },
+    [analyzeImageSrc]
+  );
 
-  // Retake photo
+  // Retake or reset photo
   const retake = useCallback(() => {
     setImage(null);
     setIsCaptured(false);
@@ -122,6 +185,16 @@ export const useFaceRecognition = ({ onDescriptorExtracted } = {}) => {
     }
   }, [onDescriptorExtracted]);
 
+  // Handle camera access failure
+  const handleCameraError = useCallback((err) => {
+    console.warn('Webcam camera error:', err);
+    setCameraError({ key: 'face.webcamError' });
+  }, []);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   return {
     webcamRef,
     image,
@@ -130,9 +203,13 @@ export const useFaceRecognition = ({ onDescriptorExtracted } = {}) => {
     isAnalyzing,
     error,
     feedback,
+    cameraError,
     capture,
-    analyzeImage,
+    analyzeImage: () => analyzeImageSrc(),
+    uploadImage,
     retake,
+    handleCameraError,
+    clearError,
   };
 };
 

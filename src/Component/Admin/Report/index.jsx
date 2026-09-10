@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,11 +12,11 @@ import {
   Filler,
 } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
-import { Link } from 'react-router-dom';
-import { LogIn, BarChart3, TrendingUp, Star, ShieldCheck, DollarSign, Loader2 } from 'lucide-react';
-import CarParkContext from '../../../CarParkContext';
+import { useTranslation } from 'react-i18next';
+import { BarChart3, TrendingUp, Star, DollarSign, Loader2 } from 'lucide-react';
 import { useRatingsQuery, useRevenueDataQuery } from '../../../features/admin/queries/useReportQueries';
-import './style.css';
+import { formatCurrency, formatMonthKey } from '../../../i18n/formatters';
+import reportBg from '../../../Img/report-bg.webp';
 
 ChartJS.register(
   CategoryScale,
@@ -31,7 +31,7 @@ ChartJS.register(
 );
 
 export const Report = () => {
-  const [user] = useContext(CarParkContext);
+  const { t, i18n } = useTranslation();
   const { data: carParks = [], isLoading: ratingsLoading } = useRatingsQuery();
   const { data: revenueData = {}, isLoading: revenueLoading } = useRevenueDataQuery();
 
@@ -51,7 +51,7 @@ export const Report = () => {
   ];
 
   const barData = {
-    labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+    labels: [1, 2, 3, 4, 5].map((count) => t('report.star', { count })),
     datasets: carParks.map((park, index) => ({
       label: park.name,
       backgroundColor: colors[index % colors.length].backgroundColor,
@@ -69,10 +69,10 @@ export const Report = () => {
   };
 
   const lineData = {
-    labels: Object.keys(revenueData),
+    labels: Object.keys(revenueData).map((month) => formatMonthKey(month, i18n.resolvedLanguage)),
     datasets: [
       {
-        label: 'Monthly Revenue (VND)',
+        label: t('report.monthlyRevenueDataset'),
         backgroundColor: 'rgba(16, 185, 129, 0.15)',
         borderColor: 'rgb(16, 185, 129)',
         borderWidth: 2.5,
@@ -93,7 +93,7 @@ export const Report = () => {
     plugins: {
       legend: {
         position: 'top',
-        labels: { font: { family: 'Inter', size: 12 } },
+        labels: { font: { family: 'Be Vietnam Pro', size: 12 } },
       },
     },
     scales: {
@@ -108,7 +108,7 @@ export const Report = () => {
     plugins: {
       legend: {
         position: 'top',
-        labels: { font: { family: 'Inter', size: 12 } },
+        labels: { font: { family: 'Be Vietnam Pro', size: 12 } },
       },
     },
     scales: {
@@ -125,68 +125,74 @@ export const Report = () => {
 
   const totalRevenue = Object.values(revenueData).reduce((acc, curr) => acc + Number(curr || 0), 0);
 
-  if (!user || user.is_staff !== true || user.is_superuser !== true) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[360px] bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm text-center">
-        <ShieldCheck className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-4" />
-        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-          Administrator Access Required
-        </h3>
-        <p className="text-sm text-slate-500 max-w-md mb-6">
-          Only authorized superusers and administrators can access revenue analysis and rating statistics.
-        </p>
-        <Link
-          to="/login"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition-all"
-        >
-          <LogIn className="w-5 h-5" />
-          <span>Admin Login</span>
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      {/* Header & KPI Summary */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          Executive Reports & Analytics
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-          Real-time performance metrics, facility satisfaction ratings, and monthly revenue trends.
-        </p>
+      {/* Telemetry & Financial Analytics Command Center Banner */}
+      <div className="relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-emerald-950 p-6 sm:p-8 text-white shadow-2xl">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <img
+            src={reportBg}
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-cover opacity-25 mix-blend-screen scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/98 via-emerald-950/85 to-teal-950/70" />
+          <div className="absolute -bottom-8 right-10 h-44 w-44 rounded-full bg-emerald-400/15 blur-3xl" />
+          <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
+        </div>
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/25 text-emerald-300 text-xs font-semibold tracking-wide uppercase">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>Real-Time Business Telemetry</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white drop-shadow-sm">
+              {t('report.title')}
+            </h1>
+            <p className="text-sm text-emerald-100/80 max-w-xl">
+              {t('report.description')}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 backdrop-blur-md">
+            <TrendingUp className="w-6 h-6 text-emerald-400" />
+            <div>
+              <div className="text-xs uppercase tracking-wider text-emerald-300 font-bold">System Status</div>
+              <div className="text-sm font-semibold text-white">Live Monitoring OK</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase text-slate-500">Total Recorded Revenue</span>
+            <span className="text-xs font-bold uppercase text-slate-500">{t('report.totalRevenue')}</span>
             <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-            {totalRevenue.toLocaleString('vi-VN')}đ
+            {formatCurrency(totalRevenue, i18n.resolvedLanguage)}
           </p>
         </div>
 
         <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase text-slate-500">Active Facilities</span>
+            <span className="text-xs font-bold uppercase text-slate-500">{t('report.activeFacilities')}</span>
             <div className="p-2 rounded-xl bg-teal-50 text-teal-600">
               <BarChart3 className="w-5 h-5" />
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-            {carParks.length} Lots
+            {t('report.lots', { count: carParks.length })}
           </p>
         </div>
 
         <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase text-slate-500">Avg Satisfaction</span>
+            <span className="text-xs font-bold uppercase text-slate-500">{t('report.satisfaction')}</span>
             <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
               <Star className="w-5 h-5" />
             </div>
@@ -202,7 +208,7 @@ export const Report = () => {
         <div className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-emerald-600" />
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            Monthly Revenue Growth
+            {t('report.revenueGrowth')}
           </h2>
         </div>
         <div className="h-72 sm:h-80 w-full">
@@ -211,7 +217,7 @@ export const Report = () => {
               <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
             </div>
           ) : (
-            <Line data={lineData} options={lineOptions} />
+            <Line data={lineData} options={lineOptions} aria-label={t('report.revenueGrowth')} role="img" />
           )}
         </div>
       </div>
@@ -221,7 +227,7 @@ export const Report = () => {
         <div className="flex items-center gap-2">
           <Star className="w-5 h-5 text-amber-500" />
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            Rating Distribution by Facility
+            {t('report.ratingDistribution')}
           </h2>
         </div>
         <div className="h-72 sm:h-80 w-full">
@@ -230,7 +236,7 @@ export const Report = () => {
               <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
             </div>
           ) : (
-            <Bar data={barData} options={barOptions} />
+            <Bar data={barData} options={barOptions} aria-label={t('report.ratingDistribution')} role="img" />
           )}
         </div>
 
@@ -240,11 +246,11 @@ export const Report = () => {
             <div key={park.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 space-y-1">
               <h4 className="font-bold text-slate-900 dark:text-white text-sm">{park.name}</h4>
               <p className="text-xs text-slate-500">
-                Avg Rating:{' '}
+                {t('report.averageRating')}{' '}
                 <span className="font-bold text-amber-500">{park.average_rate || '4.5'} / 5</span>
               </p>
               <p className="text-xs text-slate-500">
-                Total Reviews: <span className="font-bold">{park.total_reviews || 0}</span>
+                {t('report.totalReviews')} <span className="font-bold">{park.total_reviews || 0}</span>
               </p>
             </div>
           ))}

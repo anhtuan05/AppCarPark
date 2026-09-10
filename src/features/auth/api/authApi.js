@@ -1,29 +1,40 @@
 import axiosClient, { authApi } from '../../../shared/api/axiosClient';
 import { endpoints } from '../../../shared/api/endpoints';
 import tokenStorage from '../../../shared/api/tokenStorage';
+import { authTokenSchema, parseResponse, userSchema } from '../../../shared/api/contracts';
 
-const OAUTH_CLIENT_ID = import.meta.env.VITE_OAUTH_CLIENT_ID || 'PgaDmKIxd4QitVu6uHji0B7UQ4LQVIcOTpahc4Vp';
-const OAUTH_CLIENT_SECRET = import.meta.env.VITE_OAUTH_CLIENT_SECRET || 'Kol1igvmGhxYPLjdafUJG923Bo9zNgBremaIvTlIwoPRpGSoA6LHNvphph62ggUfEyLjUyg68N2DfZxbERdd5TexbN5Ef4ClRFVpDtdfa5ExsR8DBNRDH6LD0TIWDqJR';
+const OAUTH_CLIENT_ID = import.meta.env.VITE_OAUTH_CLIENT_ID;
+const OAUTH_CLIENT_SECRET = import.meta.env.VITE_OAUTH_CLIENT_SECRET;
 
 export const authService = {
   login: async (username, password) => {
+    if (!OAUTH_CLIENT_ID) {
+      const configurationError = new Error('VITE_OAUTH_CLIENT_ID is not configured.');
+      configurationError.code = 'AUTH_CONFIG_MISSING';
+      throw configurationError;
+    }
+
     const formData = new FormData();
     formData.append('client_id', OAUTH_CLIENT_ID);
-    formData.append('client_secret', OAUTH_CLIENT_SECRET);
+    if (OAUTH_CLIENT_SECRET) {
+      formData.append('client_secret', OAUTH_CLIENT_SECRET);
+    }
     formData.append('username', username);
     formData.append('password', password);
     formData.append('grant_type', 'password');
 
-    const res = await axiosClient.post(endpoints.login, formData, {
+    const res = await axiosClient.post(endpoints.oauthToken, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
     if (res.data) {
-      tokenStorage.setToken(res.data);
+      const token = parseResponse(authTokenSchema, res.data, 'authToken');
+      tokenStorage.setToken(token);
       // Fetch user profile immediately
-      const userRes = await authApi(res.data.access_token).get(endpoints.currentUser);
-      tokenStorage.setUser(userRes.data);
-      return { token: res.data, user: userRes.data };
+      const userRes = await authApi(token.access_token).get(endpoints.currentUser);
+      const user = parseResponse(userSchema, userRes.data, 'currentUser');
+      tokenStorage.setUser(user);
+      return { token, user };
     }
     return res.data;
   },
@@ -32,15 +43,17 @@ export const authService = {
     const formData = new FormData();
     formData.append('face_description', faceDescription);
 
-    const res = await axiosClient.post(endpoints.faceRecognition, formData, {
+    const res = await axiosClient.post(endpoints.faceLogin, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
     if (res.data?.access_token) {
-      tokenStorage.setToken(res.data);
-      const userRes = await authApi(res.data.access_token).get(endpoints.currentUser);
-      tokenStorage.setUser(userRes.data);
-      return { token: res.data, user: userRes.data };
+      const token = parseResponse(authTokenSchema, res.data, 'faceAuthToken');
+      tokenStorage.setToken(token);
+      const userRes = await authApi(token.access_token).get(endpoints.currentUser);
+      const user = parseResponse(userSchema, userRes.data, 'currentUser');
+      tokenStorage.setUser(user);
+      return { token, user };
     }
     return res.data;
   },
@@ -53,23 +66,26 @@ export const authService = {
       }
     });
 
-    return axiosClient.post(endpoints.register, formData, {
+    const res = await axiosClient.post(endpoints.users, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+    return parseResponse(userSchema, res.data, 'registeredUser');
   },
 
   getCurrentUser: async () => {
     const token = tokenStorage.getAccessToken();
     if (!token) return null;
     const res = await axiosClient.get(endpoints.currentUser);
-    tokenStorage.setUser(res.data);
-    return res.data;
+    const user = parseResponse(userSchema, res.data, 'currentUser');
+    tokenStorage.setUser(user);
+    return user;
   },
 
   updateProfile: async (profileData) => {
-    const res = await axiosClient.put(endpoints.putUser, profileData);
-    tokenStorage.setUser(res.data);
-    return res.data;
+    const res = await axiosClient.put(endpoints.userProfile, profileData);
+    const user = parseResponse(userSchema, res.data, 'updatedUser');
+    tokenStorage.setUser(user);
+    return user;
   },
 
   logout: () => {

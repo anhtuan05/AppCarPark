@@ -1,15 +1,21 @@
 import axiosClient from '../../../shared/api/axiosClient';
 import { endpoints } from '../../../shared/api/endpoints';
+import {
+  listResponseSchema,
+  parkingRatingSchema,
+  parseResponse,
+  revenueDataSchema,
+} from '../../../shared/api/contracts';
 
 export const reportService = {
   getRatings: async () => {
-    const res = await axiosClient.get(endpoints.ratings);
-    return Array.isArray(res.data) ? res.data : [];
+    const res = await axiosClient.get(endpoints.parkingRatings);
+    return parseResponse(listResponseSchema(parkingRatingSchema), res.data, 'parkingRatings');
   },
 
   getRevenueData: async () => {
-    const res = await axiosClient.get(endpoints.revenueData);
-    return typeof res.data === 'object' && res.data !== null ? res.data : {};
+    const res = await axiosClient.get(endpoints.revenueStatistics);
+    return parseResponse(revenueDataSchema, res.data, 'revenueStatistics');
   },
 };
 

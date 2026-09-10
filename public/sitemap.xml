@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <!-- Trang chủ / Home -->
+  <url>
+    <loc>https://greencar-park.vn/</loc>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://greencar-park.vn/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://greencar-park.vn/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://greencar-park.vn/" />
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Tìm kiếm & Sơ đồ bãi xe / Parking Lots & Real-time Spots -->
+  <url>
+    <loc>https://greencar-park.vn/parking</loc>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://greencar-park.vn/parking" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://greencar-park.vn/parking?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://greencar-park.vn/parking" />
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Đánh giá cộng đồng & Trải nghiệm / Customer Reviews -->
+  <url>
+    <loc>https://greencar-park.vn/reviews</loc>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://greencar-park.vn/reviews" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://greencar-park.vn/reviews?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://greencar-park.vn/reviews" />
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Hỗ trợ & Tiếp nhận ý kiến khách hàng / Feedback & Support -->
+  <url>
+    <loc>https://greencar-park.vn/feedback</loc>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://greencar-park.vn/feedback" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://greencar-park.vn/feedback?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://greencar-park.vn/feedback" />
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Cổng đăng nhập tài khoản / Secure Login Portal -->
+  <url>
+    <loc>https://greencar-park.vn/login</loc>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://greencar-park.vn/login" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://greencar-park.vn/login?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://greencar-park.vn/login" />
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Đăng ký tài khoản thành viên mới / Register Membership -->
+  <url>
+    <loc>https://greencar-park.vn/register</loc>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://greencar-park.vn/register" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://greencar-park.vn/register?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://greencar-park.vn/register" />
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+</urlset>
